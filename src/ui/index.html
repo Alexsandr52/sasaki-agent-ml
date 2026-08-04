@@ -983,20 +983,26 @@ function statusCell(v) {
   return wrap;
 }
 
-// лента, суженная фильтрами формата и периода (скоуп всего правого пейна и счётчиков)
-function formatFiltered() {
-  const minDate = Date.now() - periodDays * 24 * 3600e3;
-  return (state.jobs || []).filter((v) => {
-    const wf = workFormat(v);
-    // «не указан» не скрывается никогда (в т.ч. если остался в старом localStorage)
-    if (wf !== "не указан" && hiddenFormats.has(wf)) return false;
-    const d = jobDate(v);
-    return d === 0 || d >= minDate; // без даты — не режем
-  });
+// Проходит ли вакансия фильтры формата и периода. Эти фильтры — про ленту
+// «Вакансии»: отклики и скрытые это история пользователя, её ими НЕ режем.
+// Иначе период «за неделю» на поиске прятал отклик двухнедельной давности —
+// данные при этом целы, но с глаз пропадали (см. viewOf: applied/hidden).
+function passesFeedFilters(v) {
+  const wf = workFormat(v);
+  // «не указан» не скрывается никогда (в т.ч. если остался в старом localStorage)
+  if (wf !== "не указан" && hiddenFormats.has(wf)) return false;
+  const d = jobDate(v);
+  return d === 0 || d >= Date.now() - periodDays * 24 * 3600e3; // без даты — не режем
+}
+// Записи в области видимости вкладки: ленту «Вакансии» сужаем формой/периодом,
+// отклики и скрытые — нет.
+function scopedJobs(key) {
+  const jobs = state.jobs || [];
+  return key === "new" ? jobs.filter(passesFeedFilters) : jobs;
 }
 function visibleJobs() {
   const q = ($("search").value || "").trim().toLowerCase();
-  const jobs = formatFiltered().filter((v) => inView(v, view));
+  const jobs = scopedJobs(view).filter((v) => inView(v, view));
   if (!q) return jobs;
   return jobs.filter((v) =>
     [v.company, v.title, v.source, v.location, v.url].filter(Boolean).join(" ").toLowerCase().includes(q)
@@ -1005,13 +1011,14 @@ function visibleJobs() {
 
 function renderTabs() {
   const el = $("tabs"); el.textContent = "";
-  const jobs = formatFiltered();
   VIEWS.forEach(({ key, label }) => {
     const b = document.createElement("button");
     b.className = "tab" + (view === key ? " active" : "");
     b.append(document.createTextNode(label));
     const c = document.createElement("span"); c.className = "cnt";
-    c.textContent = jobs.filter((v) => inView(v, key)).length;
+    // счётчик каждой вкладки — в её же области видимости (лента фильтруется,
+    // отклики/скрытые нет), иначе счётчик расходится с содержимым
+    c.textContent = scopedJobs(key).filter((v) => inView(v, key)).length;
     b.append(c);
     b.onclick = () => { view = key; localStorage.setItem("view", key); renderMain(); };
     el.append(b);
