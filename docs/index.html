@@ -24,8 +24,8 @@
     --line:    #e6e6e0;
     --accent:  #1f7a48;
     --accent-wash: #e9f3ec;
-    --plate:   rgba(255,255,255,.62);
-    --plate-open: rgba(255,255,255,.88);
+    --plate:   rgba(255,255,255,.60);
+    --plate-on: rgba(255,255,255,.88);
     --gap: 4px;
     --pad: 10px;
     --head: 46px;
@@ -38,7 +38,7 @@
     font-family: "Schibsted Grotesk", system-ui, sans-serif;
     font-size: 16px; line-height: 1.5; letter-spacing: -.006em;
     -webkit-font-smoothing: antialiased;
-    overflow: hidden;                 /* один экран, без скролла страницы */
+    overflow: hidden;                    /* один экран, без скролла */
   }
   a { color: inherit; text-decoration: none; }
   ::selection { background: var(--accent); color: #fff; }
@@ -46,51 +46,53 @@
 
   /* фон-видео */
   .bgv { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; background: #a9c1ef; }
-  .bgv-scrim { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(180deg, rgba(240,240,238,.20), rgba(240,240,238,.42)); }
+  .bgv-scrim { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(180deg, rgba(240,240,238,.18), rgba(240,240,238,.40)); }
 
-  /* ── сцена: 4 плашки на всю высоту ──────────────────── */
+  /* ── сцена ──────────────────────────────────────────── */
   .stage {
     position: relative; z-index: 1;
     height: 100dvh; padding: var(--pad);
     display: flex; flex-direction: column; gap: var(--gap);
   }
+
+  /* ряд из 4 плашек по горизонтали */
+  .tabs { flex: none; display: flex; gap: var(--gap); }
   .plate {
-    flex: 0 1 var(--head); min-height: var(--head); overflow: hidden;
-    border-radius: var(--r); background: var(--plate);
-    backdrop-filter: blur(22px) saturate(1.3); -webkit-backdrop-filter: blur(22px) saturate(1.3);
+    flex: 1 1 0; min-width: 0; height: var(--head);
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 0 14px; border: 1px solid rgba(255,255,255,.5); border-radius: var(--r);
+    background: var(--plate); backdrop-filter: blur(22px) saturate(1.3); -webkit-backdrop-filter: blur(22px) saturate(1.3);
+    font: inherit; color: inherit; text-align: left; cursor: pointer;
+    transition: background .25s ease;
+  }
+  .plate:hover { background: rgba(255,255,255,.76); }
+  .plate.active { background: var(--plate-on); }
+  .plate .ttl { font-size: 15px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .plate.active .ttl { color: var(--accent); }
+  .plate .ico { flex: none; display: grid; place-items: center; width: 18px; height: 18px; color: var(--ink-2); transition: transform .42s cubic-bezier(.22,.9,.2,1), color .25s; }
+  .plate .ico svg { width: 100%; height: 100%; }
+  .plate.active .ico { transform: rotate(45deg); color: var(--accent); }
+  .plate.link .ico { transform: none; }
+
+  /* область панелей: раскрывается вниз на всю доступную высоту */
+  .panels {
+    flex: 0 1 0; min-height: 0; position: relative;
+    transition: flex-grow .52s cubic-bezier(.22,.9,.2,1);
+  }
+  .panels.shown { flex-grow: 1; }
+  .panel {
+    position: absolute; inset: 0; border-radius: var(--r);
+    background: var(--plate-on); backdrop-filter: blur(22px) saturate(1.3); -webkit-backdrop-filter: blur(22px) saturate(1.3);
     border: 1px solid rgba(255,255,255,.5);
-    display: flex; flex-direction: column;
-    transition: flex-grow .52s cubic-bezier(.22,.9,.2,1), background .3s;
+    padding: 16px; overflow: auto;
+    opacity: 0; visibility: hidden; transition: opacity .28s ease;
   }
-  .plate.open { flex-grow: 1; background: var(--plate-open); }
-
-  /* шапка плашки: текст слева, иконка справа */
-  .head {
-    flex: none; height: var(--head); width: 100%;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 14px; background: none; border: 0; cursor: pointer;
-    font: inherit; color: inherit; text-align: left;
-  }
-  .head .ttl { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
-  .plate.open .head .ttl { color: var(--accent); }
-  .head .ico { flex: none; display: grid; place-items: center; width: 20px; height: 20px; color: var(--ink-2); transition: transform .45s cubic-bezier(.22,.9,.2,1), color .3s; }
-  .plate.open .head .ico { transform: rotate(45deg); color: var(--accent); }
-  .head:hover .ico { color: var(--ink); }
-  .head .ico svg { width: 100%; height: 100%; }
-  .plate.link .head .ico { transform: none; }
-  .plate.link:hover { background: rgba(255,255,255,.8); }
-
-  /* тело плашки */
-  .body {
-    flex: 1; min-height: 0; opacity: 0; overflow: hidden;
-    padding: 0 14px; transition: opacity .3s ease .12s;
-  }
-  .plate.open .body { opacity: 1; overflow: auto; padding-bottom: 14px; }
+  .panel.open { opacity: 1; visibility: visible; }
 
   /* ── контент: sasaki ───────────────────────────────── */
   .duo { height: 100%; display: grid; grid-template-columns: 1.05fr .95fr; gap: 26px; min-height: 0; }
   .duo > * { min-height: 0; }
-  h1 { margin: 0; font-weight: 500; font-size: clamp(1.7rem, 3.3vw, 2.9rem); line-height: 1.04; letter-spacing: -.032em; }
+  h1 { margin: 0; font-weight: 500; font-size: clamp(1.6rem, 3.2vw, 2.8rem); line-height: 1.04; letter-spacing: -.032em; }
   h1 .g { color: var(--accent); }
   .lead { margin: 14px 0 0; max-width: 38ch; color: var(--ink-2); font-size: 15.5px; }
   .cmd {
@@ -145,11 +147,17 @@
   .srcs .names { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px 16px; font-size: 13.5px; font-weight: 500; }
   .srcs .names .more { color: var(--accent); }
 
-  @media (max-width: 760px) {
+  /* ── адаптив ───────────────────────────────────────── */
+  @media (max-width: 860px) {
     .duo, .two, .three { grid-template-columns: 1fr; }
     .duo { display: block; }
-    .duo > div:last-child { display: none; }   /* лента целиком, вместе с подписью */
-    .three .card:nth-child(n+3) { display: none; }
+    .duo > div:last-child { display: none; }    /* лента вместе с подписью */
+  }
+  @media (max-width: 620px) {
+    /* плашки в две строки 2×2, чтобы подписи не резались */
+    .tabs { flex-wrap: wrap; }
+    .plate { flex: 1 1 calc(50% - var(--gap)); }
+    .plate .ttl { font-size: 14px; }
   }
   @media (max-width: 430px) {
     .cmd code { font-size: 11.5px; }
@@ -167,13 +175,31 @@
 
 <div class="stage">
 
-  <!-- 1 · sasaki -->
-  <section class="plate open" id="p1">
-    <button class="head" aria-expanded="true" aria-controls="b1">
+  <!-- ряд плашек -->
+  <div class="tabs">
+    <button class="plate active" data-panel="p1" aria-expanded="true" aria-controls="p1">
       <span class="ttl">sasaki</span>
       <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
     </button>
-    <div class="body" id="b1">
+    <button class="plate" data-panel="p2" aria-expanded="false" aria-controls="p2">
+      <span class="ttl">установка</span>
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+    </button>
+    <button class="plate" data-panel="p3" aria-expanded="false" aria-controls="p3">
+      <span class="ttl">как работает</span>
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+    </button>
+    <a class="plate link" href="https://github.com/peachcardinal/sasaki-agent" target="_blank" rel="noopener">
+      <span class="ttl">github</span>
+      <span class="ico"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></span>
+    </a>
+  </div>
+
+  <!-- панель, раскрывающаяся вниз на всю доступную высоту -->
+  <div class="panels shown" id="panels">
+
+    <!-- sasaki -->
+    <div class="panel open" id="p1">
       <div class="duo">
         <div>
           <h1>Собирает вакансии.<br>Отсеивает лишнее.<br>Ведёт твои <span class="g">отклики</span>.</h1>
@@ -190,15 +216,9 @@
         </div>
       </div>
     </div>
-  </section>
 
-  <!-- 2 · установка -->
-  <section class="plate" id="p2">
-    <button class="head" aria-expanded="false" aria-controls="b2">
-      <span class="ttl">установка</span>
-      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
-    </button>
-    <div class="body" id="b2">
+    <!-- установка -->
+    <div class="panel" id="p2">
       <div class="two">
         <div class="box">
           <h3>Руками</h3>
@@ -216,15 +236,9 @@
         </div>
       </div>
     </div>
-  </section>
 
-  <!-- 3 · как работает -->
-  <section class="plate" id="p3">
-    <button class="head" aria-expanded="false" aria-controls="b3">
-      <span class="ttl">как работает</span>
-      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
-    </button>
-    <div class="body" id="b3">
+    <!-- как работает -->
+    <div class="panel" id="p3">
       <div class="three">
         <div class="card">
           <div class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
@@ -253,33 +267,28 @@
         </div>
       </div>
     </div>
-  </section>
 
-  <!-- 4 · github -->
-  <a class="plate link" href="https://github.com/peachcardinal/sasaki-agent" target="_blank" rel="noopener">
-    <span class="head">
-      <span class="ttl">github</span>
-      <span class="ico"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></span>
-    </span>
-  </a>
-
+  </div>
 </div>
 
 <script>
-  // аккордеон: открыта всегда ровно одна плашка
+  // вкладки: открыта ровно одна панель, повторный клик закрывает
   (function () {
-    var plates = [].slice.call(document.querySelectorAll(".plate:not(.link)"));
-    plates.forEach(function (p) {
-      p.querySelector(".head").addEventListener("click", function () {
-        var wasOpen = p.classList.contains("open");
-        plates.forEach(function (o) {
-          o.classList.remove("open");
-          o.querySelector(".head").setAttribute("aria-expanded", "false");
+    var tabs = [].slice.call(document.querySelectorAll(".plate[data-panel]"));
+    var panels = document.getElementById("panels");
+    tabs.forEach(function (t) {
+      t.addEventListener("click", function () {
+        var wasActive = t.classList.contains("active");
+        tabs.forEach(function (o) {
+          o.classList.remove("active");
+          o.setAttribute("aria-expanded", "false");
+          document.getElementById(o.dataset.panel).classList.remove("open");
         });
-        if (!wasOpen) {
-          p.classList.add("open");
-          p.querySelector(".head").setAttribute("aria-expanded", "true");
-        }
+        if (wasActive) { panels.classList.remove("shown"); return; }
+        t.classList.add("active");
+        t.setAttribute("aria-expanded", "true");
+        document.getElementById(t.dataset.panel).classList.add("open");
+        panels.classList.add("shown");
       });
     });
   })();
@@ -316,7 +325,6 @@
       av:["A","#00a0e9"], gis:["2","#19aa1e"], alfa:["А","#ef3124"], x5:["X5","#e11a2c"],
       tb:["Т","#111"], mts:["М","#e30611"]
     };
-    var N = { hh:"hh", gm:"getmatch", ya:"Яндекс", vk:"VK", av:"Авито", gis:"2ГИС", alfa:"Альфа", x5:"X5", tb:"Т-Банк", mts:"МТС" };
     var data = [
       ["21","июл","Продуктовый дизайнер","Туту · senior","удалённо",1,"hh"],
       ["21","июл","Design Team Lead (Web, TV & Auto)","Звук · lead","гибрид",0,"gm"],
