@@ -25,7 +25,7 @@
     --accent:  #1f7a48;
     --accent-wash: #e9f3ec;
     --plate:   rgba(255,255,255,.60);
-    --plate-on: rgba(255,255,255,.88);
+    --plate-on: rgba(255,255,255,.90);
     --gap: 4px;
     --pad: 10px;
     --head: 46px;
@@ -48,120 +48,112 @@
   .bgv { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; background: #a9c1ef; }
   .bgv-scrim { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(180deg, rgba(240,240,238,.18), rgba(240,240,238,.40)); }
 
-  /* ── сцена ──────────────────────────────────────────── */
+  /* ── сцена: ряд плашек всегда по центру экрана ──────── */
   .stage {
     position: relative; z-index: 1;
     height: 100dvh; padding: var(--pad);
-    display: flex; flex-direction: column; gap: var(--gap);
+    display: flex; align-items: center;          /* ряд зафиксирован по центру */
+  }
+  .tabs {
+    width: 100%; height: var(--head);            /* высота ряда неизменна — центр не «плавает» */
+    display: flex; gap: var(--gap); align-items: flex-start;
   }
 
-  /* ряд из 4 плашек по горизонтали */
-  .tabs { flex: none; display: flex; gap: var(--gap); }
+  /* плашка = кнопка, которая сама растягивается вниз */
   .plate {
-    flex: 1 1 0; min-width: 0; height: var(--head);
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
-    padding: 0 14px; border: 1px solid rgba(255,255,255,.5); border-radius: var(--r);
+    flex: 1 1 0; min-width: 0; height: var(--head); overflow: hidden;
+    display: flex; flex-direction: column;
+    border: 1px solid rgba(255,255,255,.5); border-radius: var(--r);
     background: var(--plate); backdrop-filter: blur(22px) saturate(1.3); -webkit-backdrop-filter: blur(22px) saturate(1.3);
-    font: inherit; color: inherit; text-align: left; cursor: pointer;
-    transition: background .25s ease;
+    font: inherit; color: inherit; text-align: left;
+    transition: height .5s cubic-bezier(.22,.9,.2,1), background .25s ease;
   }
-  .plate:hover { background: rgba(255,255,255,.76); }
-  .plate.active { background: var(--plate-on); }
-  .plate .ttl { font-size: 15px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .plate.active .ttl { color: var(--accent); }
-  .plate .ico { flex: none; display: grid; place-items: center; width: 18px; height: 18px; color: var(--ink-2); transition: transform .42s cubic-bezier(.22,.9,.2,1), color .25s; }
-  .plate .ico svg { width: 100%; height: 100%; }
-  .plate.active .ico { transform: rotate(45deg); color: var(--accent); }
-  .plate.link .ico { transform: none; }
+  .plate:hover { background: rgba(255,255,255,.78); }
+  /* от центра вниз до нижнего края минус отступ 10px */
+  .plate.active { height: calc(50dvh + 13px); background: var(--plate-on); }
 
-  /* область панелей: раскрывается вниз на всю доступную высоту */
-  .panels {
-    flex: 0 1 0; min-height: 0; position: relative;
-    transition: flex-grow .52s cubic-bezier(.22,.9,.2,1);
+  .head {
+    flex: none; height: var(--head); width: 100%;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 0 14px; background: none; border: 0; cursor: pointer;
+    font: inherit; color: inherit; text-align: left;
   }
-  .panels.shown { flex-grow: 1; }
-  .panel {
-    position: absolute; inset: 0; border-radius: var(--r);
-    background: var(--plate-on); backdrop-filter: blur(22px) saturate(1.3); -webkit-backdrop-filter: blur(22px) saturate(1.3);
-    border: 1px solid rgba(255,255,255,.5);
-    padding: 16px; overflow: auto;
-    opacity: 0; visibility: hidden; transition: opacity .28s ease;
-  }
-  .panel.open { opacity: 1; visibility: visible; }
+  .head .ttl { font-size: 15px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .plate.active .head .ttl { color: var(--accent); }
+  .head .ico { flex: none; display: grid; place-items: center; width: 18px; height: 18px; color: var(--ink-2); transition: transform .42s cubic-bezier(.22,.9,.2,1), color .25s; }
+  .head .ico svg { width: 100%; height: 100%; }
+  .plate.active .head .ico { transform: rotate(45deg); color: var(--accent); }
+  .plate.link .head .ico { transform: none; }
 
-  /* ── контент: sasaki ───────────────────────────────── */
-  .duo { height: 100%; display: grid; grid-template-columns: 1.05fr .95fr; gap: 26px; min-height: 0; }
-  .duo > * { min-height: 0; }
-  h1 { margin: 0; font-weight: 500; font-size: clamp(1.6rem, 3.2vw, 2.8rem); line-height: 1.04; letter-spacing: -.032em; }
+  .body {
+    flex: 1; min-height: 0; overflow: auto; padding: 0 14px 14px;
+    opacity: 0; transition: opacity .3s ease .1s;
+  }
+  .plate.active .body { opacity: 1; }
+
+  /* ── контент узкой колонкой ────────────────────────── */
+  h1 { margin: 0; font-weight: 500; font-size: clamp(1.35rem, 1.9vw, 1.75rem); line-height: 1.08; letter-spacing: -.03em; }
   h1 .g { color: var(--accent); }
-  .lead { margin: 14px 0 0; max-width: 38ch; color: var(--ink-2); font-size: 15.5px; }
-  .cmd {
-    display: inline-flex; align-items: center; gap: 10px; margin-top: 20px; max-width: 100%;
-    background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 6px 6px 6px 16px;
-  }
-  .cmd code { font-family: "Space Mono", monospace; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lead { margin: 12px 0 0; color: var(--ink-2); font-size: 14px; line-height: 1.45; }
+
+  .cmd { margin-top: 16px; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .cmd code { display: block; font-family: "Space Mono", monospace; font-size: 11.5px; line-height: 1.6; word-break: break-all; color: var(--ink); }
   .cmd code .pr { color: var(--accent); }
-  .copy { flex: none; display: inline-flex; align-items: center; gap: 6px; border: 0; cursor: pointer; background: var(--ink); color: #fff; font: inherit; font-weight: 600; font-size: 12.5px; padding: 8px 13px; border-radius: 999px; transition: background .16s; }
+  .copy {
+    margin-top: 9px; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    border: 0; cursor: pointer; background: var(--ink); color: #fff; font: inherit; font-weight: 600; font-size: 12.5px;
+    padding: 8px 12px; border-radius: 7px; transition: background .16s;
+  }
   .copy:hover, .copy.done { background: var(--accent); }
-  .meta { margin-top: 16px; font-size: 12.5px; color: var(--ink-3); }
+  .meta { margin-top: 12px; font-size: 11.5px; color: var(--ink-3); line-height: 1.5; }
 
   /* живая лента */
-  .feed-h { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink-3); margin-bottom: 8px; }
-  .feed { height: calc(100% - 26px); overflow: hidden; -webkit-mask-image: linear-gradient(180deg, transparent, #000 9%, #000 88%, transparent); mask-image: linear-gradient(180deg, transparent, #000 9%, #000 88%, transparent); }
-  .track { display: flex; flex-direction: column; gap: 7px; animation: stream 34s linear infinite; }
+  .feed-h { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--ink-3); margin: 16px 0 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .feed { height: 190px; overflow: hidden; -webkit-mask-image: linear-gradient(180deg, transparent, #000 12%, #000 84%, transparent); mask-image: linear-gradient(180deg, transparent, #000 12%, #000 84%, transparent); }
+  .track { display: flex; flex-direction: column; gap: 6px; animation: stream 32s linear infinite; }
   .feed:hover .track { animation-play-state: paused; }
   @keyframes stream { from { transform: translateY(0) } to { transform: translateY(-50%) } }
   @media (prefers-reduced-motion: reduce) { .track { animation: none } }
-  .vac { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; }
-  .vac .d { text-align: center; line-height: 1; color: var(--ink-2); }
-  .vac .d b { display: block; font-size: 14px; color: var(--ink); }
-  .vac .d span { font-size: 10px; }
-  .vac .m { min-width: 0; }
-  .vac .t { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .vac .s { font-size: 11.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .vac .r { display: flex; align-items: center; gap: 9px; }
-  .fmt { font-size: 10.5px; color: var(--ink-2); background: #f5f5f2; border-radius: 5px; padding: 3px 7px; white-space: nowrap; }
+  .vac { background: #fff; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; }
+  .vac .t { font-weight: 600; font-size: 12.5px; line-height: 1.25; }
+  .vac .b { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+  .vac .s { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vac .r { display: flex; align-items: center; gap: 7px; flex: none; }
+  .fmt { font-size: 10px; color: var(--ink-2); background: #f5f5f2; border-radius: 5px; padding: 2px 6px; white-space: nowrap; }
   .fmt.rem { color: var(--accent); background: var(--accent-wash); }
-  .src i { width: 16px; height: 16px; border-radius: 4px; display: grid; place-items: center; color: #fff; font-size: 8px; font-weight: 700; font-style: normal; }
+  .src i { width: 15px; height: 15px; border-radius: 4px; display: grid; place-items: center; color: #fff; font-size: 7.5px; font-weight: 700; font-style: normal; }
 
-  /* ── контент: установка ────────────────────────────── */
-  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .box { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 16px; min-width: 0; }
-  .box h3 { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
-  .box p { margin: 0 0 10px; font-size: 13px; color: var(--ink-2); }
-  .term { background: #16160f; border-radius: 8px; padding: 12px 14px; font-family: "Space Mono", monospace; font-size: 12px; line-height: 1.8; color: #eceae0; white-space: pre-wrap; word-break: break-word; }
+  /* установка */
+  .box { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 13px; }
+  .box + .box { margin-top: 10px; }
+  .box h3 { margin: 0 0 3px; font-size: 13.5px; font-weight: 600; }
+  .box p { margin: 0 0 9px; font-size: 12.5px; color: var(--ink-2); line-height: 1.45; }
+  .term { background: #16160f; border-radius: 7px; padding: 10px 11px; font-family: "Space Mono", monospace; font-size: 11px; line-height: 1.75; color: #eceae0; white-space: pre-wrap; word-break: break-all; }
   .term .pr { color: #7fcf9c; user-select: none; }
-  .term .cm { color: #86847a; display: block; margin-bottom: 6px; }
-  .req { margin-top: 10px; font-size: 12px; color: var(--ink-3); }
-  .req code { font-family: "Space Mono", monospace; background: #f5f5f2; padding: 1px 5px; border-radius: 4px; font-size: 11.5px; }
+  .term .cm { color: #86847a; display: block; margin-bottom: 5px; }
+  .req { margin: 9px 0 0; font-size: 11.5px; color: var(--ink-3); line-height: 1.45; }
+  .req code { font-family: "Space Mono", monospace; background: #f5f5f2; padding: 1px 4px; border-radius: 4px; font-size: 11px; }
 
-  /* ── контент: как работает ─────────────────────────── */
-  .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-  .card { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 16px; }
-  .card .ic { width: 30px; height: 30px; border-radius: 8px; background: var(--accent-wash); display: grid; place-items: center; margin-bottom: 10px; }
-  .card .ic svg { width: 16px; height: 16px; stroke: var(--accent); fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-  .card h3 { margin: 0 0 5px; font-size: 14px; font-weight: 600; }
-  .card p { margin: 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.5; }
-  .srcs { margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--line); }
-  .srcs .k { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
-  .srcs .names { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px 16px; font-size: 13.5px; font-weight: 500; }
+  /* как работает */
+  .card { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 13px; }
+  .card + .card { margin-top: 10px; }
+  .card .ic { width: 26px; height: 26px; border-radius: 7px; background: var(--accent-wash); display: grid; place-items: center; margin-bottom: 8px; }
+  .card .ic svg { width: 14px; height: 14px; stroke: var(--accent); fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .card h3 { margin: 0 0 4px; font-size: 13.5px; font-weight: 600; }
+  .card p { margin: 0; font-size: 12px; color: var(--ink-2); line-height: 1.45; }
+  .srcs { margin-top: 13px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .srcs .k { font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+  .srcs .names { margin-top: 7px; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; font-weight: 500; }
   .srcs .names .more { color: var(--accent); }
 
   /* ── адаптив ───────────────────────────────────────── */
-  @media (max-width: 860px) {
-    .duo, .two, .three { grid-template-columns: 1fr; }
-    .duo { display: block; }
-    .duo > div:last-child { display: none; }    /* лента вместе с подписью */
-  }
-  @media (max-width: 620px) {
-    /* плашки в две строки 2×2, чтобы подписи не резались */
-    .tabs { flex-wrap: wrap; }
-    .plate { flex: 1 1 calc(50% - var(--gap)); }
-    .plate .ttl { font-size: 14px; }
-  }
-  @media (max-width: 430px) {
-    .cmd code { font-size: 11.5px; }
-    .copy span { display: none; }
+  /* Узкий экран: в ряд четыре подписи не влезают, а при переносе в 2×2
+     растянутая плашка распирает строку и вторая пара уезжает за экран.
+     Поэтому на мобильном — вертикальный стек, активная тянется вниз. */
+  @media (max-width: 720px) {
+    .tabs { flex-direction: column; height: auto; }
+    .plate { flex: none; width: 100%; }
+    .plate.active { height: calc(100dvh - 170px); }
   }
 </style>
 </head>
@@ -174,52 +166,34 @@
 <div class="bgv-scrim"></div>
 
 <div class="stage">
-
-  <!-- ряд плашек -->
   <div class="tabs">
-    <button class="plate active" data-panel="p1" aria-expanded="true" aria-controls="p1">
-      <span class="ttl">sasaki</span>
-      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
-    </button>
-    <button class="plate" data-panel="p2" aria-expanded="false" aria-controls="p2">
-      <span class="ttl">установка</span>
-      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
-    </button>
-    <button class="plate" data-panel="p3" aria-expanded="false" aria-controls="p3">
-      <span class="ttl">как работает</span>
-      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
-    </button>
-    <a class="plate link" href="https://github.com/peachcardinal/sasaki-agent" target="_blank" rel="noopener">
-      <span class="ttl">github</span>
-      <span class="ico"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></span>
-    </a>
-  </div>
 
-  <!-- панель, раскрывающаяся вниз на всю доступную высоту -->
-  <div class="panels shown" id="panels">
-
-    <!-- sasaki -->
-    <div class="panel open" id="p1">
-      <div class="duo">
-        <div>
-          <h1>Собирает вакансии.<br>Отсеивает лишнее.<br>Ведёт твои <span class="g">отклики</span>.</h1>
-          <p class="lead">Локальный агент, который ищет тебе работу — сам, каждые 6 часов, пока ты занят делом.</p>
-          <div class="cmd">
-            <code><span class="pr">$ </span>git clone …/sasaki-agent &amp;&amp; npm run setup</code>
-            <button class="copy" id="copy" aria-label="Скопировать команду"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Копировать</span></button>
-          </div>
-          <p class="meta">Node.js 21+ · zero-dependency · MIT · by 10byrs</p>
+    <!-- 1 · sasaki -->
+    <section class="plate active" id="p1">
+      <button class="head" aria-expanded="true" aria-controls="b1">
+        <span class="ttl">sasaki</span>
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+      </button>
+      <div class="body" id="b1">
+        <h1>Собирает вакансии.<br>Отсеивает лишнее.<br>Ведёт твои <span class="g">отклики</span>.</h1>
+        <p class="lead">Локальный агент, который ищет тебе работу — сам, каждые 6 часов, пока ты занят делом.</p>
+        <div class="cmd">
+          <code><span class="pr">$ </span>git clone …/sasaki-agent &amp;&amp; npm run setup</code>
+          <button class="copy" id="copy"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Копировать</span></button>
         </div>
-        <div>
-          <div class="feed-h"><span>Лента находок</span><span class="mono">127.0.0.1:4321</span></div>
-          <div class="feed"><div class="track" id="track"></div></div>
-        </div>
+        <p class="meta">Node.js 21+ · zero-dependency · MIT · by 10byrs</p>
+        <div class="feed-h"><span>Лента находок</span><span class="mono">127.0.0.1:4321</span></div>
+        <div class="feed"><div class="track" id="track"></div></div>
       </div>
-    </div>
+    </section>
 
-    <!-- установка -->
-    <div class="panel" id="p2">
-      <div class="two">
+    <!-- 2 · установка -->
+    <section class="plate" id="p2">
+      <button class="head" aria-expanded="false" aria-controls="b2">
+        <span class="ttl">установка</span>
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+      </button>
+      <div class="body" id="b2">
         <div class="box">
           <h3>Руками</h3>
           <p>Три команды в терминале:</p>
@@ -235,11 +209,15 @@
           <p class="req">Установка неинтерактивная — агент не застрянет на вопросах.</p>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- как работает -->
-    <div class="panel" id="p3">
-      <div class="three">
+    <!-- 3 · как работает -->
+    <section class="plate" id="p3">
+      <button class="head" aria-expanded="false" aria-controls="b3">
+        <span class="ttl">как работает</span>
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+      </button>
+      <div class="body" id="b3">
         <div class="card">
           <div class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
           <h3>Обходит источники сам</h3>
@@ -255,40 +233,45 @@
           <h3>Ведёт твои отклики</h3>
           <p>Воронка Новый → Отклик → Собес → Тестовое → Оффер, рядом — сопроводительное письмо. Всё на твоём компьютере.</p>
         </div>
-      </div>
-      <div class="srcs">
-        <div class="k">19 источников · один поток</div>
-        <div class="names">
-          <span>hh.ru</span><span>LinkedIn</span><span>getmatch</span><span>Хабр Карьера</span>
-          <span>designer.ru</span><span>hirehi</span><span>finder</span><span>Telegram</span>
-          <span>Яндекс</span><span>VK</span><span>Т-Банк</span><span>Авито</span><span>X5</span>
-          <span>МТС</span><span>Магнит</span><span>Wildberries</span><span>Точка</span>
-          <span>Альфа-Банк</span><span>2ГИС</span><span class="more">+ свой сайт</span>
+        <div class="srcs">
+          <div class="k">19 источников · один поток</div>
+          <div class="names">
+            <span>hh.ru</span><span>LinkedIn</span><span>getmatch</span><span>Хабр Карьера</span>
+            <span>designer.ru</span><span>hirehi</span><span>finder</span><span>Telegram</span>
+            <span>Яндекс</span><span>VK</span><span>Т-Банк</span><span>Авито</span><span>X5</span>
+            <span>МТС</span><span>Магнит</span><span>Wildberries</span><span>Точка</span>
+            <span>Альфа-Банк</span><span>2ГИС</span><span class="more">+ свой сайт</span>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
+
+    <!-- 4 · github -->
+    <a class="plate link" href="https://github.com/peachcardinal/sasaki-agent" target="_blank" rel="noopener">
+      <span class="head">
+        <span class="ttl">github</span>
+        <span class="ico"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></span>
+      </span>
+    </a>
 
   </div>
 </div>
 
 <script>
-  // вкладки: открыта ровно одна панель, повторный клик закрывает
+  // аккордеон: открыта ровно одна плашка, повторный клик закрывает
   (function () {
-    var tabs = [].slice.call(document.querySelectorAll(".plate[data-panel]"));
-    var panels = document.getElementById("panels");
-    tabs.forEach(function (t) {
-      t.addEventListener("click", function () {
-        var wasActive = t.classList.contains("active");
-        tabs.forEach(function (o) {
+    var plates = [].slice.call(document.querySelectorAll(".plate:not(.link)"));
+    plates.forEach(function (p) {
+      p.querySelector(".head").addEventListener("click", function () {
+        var was = p.classList.contains("active");
+        plates.forEach(function (o) {
           o.classList.remove("active");
-          o.setAttribute("aria-expanded", "false");
-          document.getElementById(o.dataset.panel).classList.remove("open");
+          o.querySelector(".head").setAttribute("aria-expanded", "false");
         });
-        if (wasActive) { panels.classList.remove("shown"); return; }
-        t.classList.add("active");
-        t.setAttribute("aria-expanded", "true");
-        document.getElementById(t.dataset.panel).classList.add("open");
-        panels.classList.add("shown");
+        if (!was) {
+          p.classList.add("active");
+          p.querySelector(".head").setAttribute("aria-expanded", "true");
+        }
       });
     });
   })();
@@ -326,26 +309,26 @@
       tb:["Т","#111"], mts:["М","#e30611"]
     };
     var data = [
-      ["21","июл","Продуктовый дизайнер","Туту · senior","удалённо",1,"hh"],
-      ["21","июл","Design Team Lead (Web, TV & Auto)","Звук · lead","гибрид",0,"gm"],
-      ["20","июл","Senior Product Designer","Яндекс · senior","удалённо",1,"ya"],
-      ["20","июл","Ведущий дизайнер продукта","VK · lead","гибрид",0,"vk"],
-      ["20","июл","UX/UI-дизайнер","Авито · middle","офис",0,"av"],
-      ["19","июл","Продуктовый дизайнер","Т-Банк · senior","удалённо",1,"tb"],
-      ["19","июл","Дизайн-директор продукта","2ГИС · head","удалённо",1,"gis"],
-      ["18","июл","Продуктовый дизайнер (Senior)","getmatch agency · senior","гибрид",0,"gm"],
-      ["18","июл","Ведущий дизайнер интерфейсов","Альфа-Банк · lead","гибрид",0,"alfa"],
-      ["17","июл","Product Designer","X5 Tech · senior","удалённо",1,"x5"],
-      ["17","июл","Продуктовый дизайнер","МТС · middle","гибрид",0,"mts"],
-      ["16","июл","Дизайнер продукта в дизайн-систему","Т-Банк · senior","удалённо",1,"tb"]
+      ["Продуктовый дизайнер","Туту · senior","удалённо",1,"hh"],
+      ["Design Team Lead (Web, TV & Auto)","Звук · lead","гибрид",0,"gm"],
+      ["Senior Product Designer","Яндекс · senior","удалённо",1,"ya"],
+      ["Ведущий дизайнер продукта","VK · lead","гибрид",0,"vk"],
+      ["UX/UI-дизайнер","Авито · middle","офис",0,"av"],
+      ["Продуктовый дизайнер","Т-Банк · senior","удалённо",1,"tb"],
+      ["Дизайн-директор продукта","2ГИС · head","удалённо",1,"gis"],
+      ["Продуктовый дизайнер (Senior)","getmatch agency · senior","гибрид",0,"gm"],
+      ["Ведущий дизайнер интерфейсов","Альфа-Банк · lead","гибрид",0,"alfa"],
+      ["Product Designer","X5 Tech · senior","удалённо",1,"x5"],
+      ["Продуктовый дизайнер","МТС · middle","гибрид",0,"mts"],
+      ["Дизайнер продукта в дизайн-систему","Т-Банк · senior","удалённо",1,"tb"]
     ];
     function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
     var html = data.map(function (v) {
-      var s = S[v[6]];
-      return '<div class="vac"><div class="d"><b>'+v[0]+'</b><span>'+v[1]+'</span></div>' +
-        '<div class="m"><div class="t">'+esc(v[2])+'</div><div class="s">'+esc(v[3])+'</div></div>' +
-        '<div class="r"><span class="fmt'+(v[5]?' rem':'')+'">'+v[4]+'</span>' +
-        '<span class="src"><i style="background:'+s[1]+'">'+s[0]+'</i></span></div></div>';
+      var s = S[v[4]];
+      return '<div class="vac"><div class="t">'+esc(v[0])+'</div><div class="b">' +
+        '<span class="s">'+esc(v[1])+'</span>' +
+        '<span class="r"><span class="fmt'+(v[3]?' rem':'')+'">'+v[2]+'</span>' +
+        '<span class="src"><i style="background:'+s[1]+'">'+s[0]+'</i></span></span></div></div>';
     }).join("");
     document.getElementById("track").innerHTML = html + html;
   })();
