@@ -7,383 +7,316 @@
 <meta name="description" content="Локальный агент поиска работы для дизайнеров. Раз в 6 часов сам обходит два десятка источников, отбирает подходящее и складывает в пульт с трекером откликов. Всё на твоём компьютере." />
 
 <meta property="og:title" content="sasaki — агент, который сам ищет тебе работу" />
-<meta property="og:description" content="Раз в 6 часов сам обходит два десятка источников, отбирает подходящее по твоим критериям и складывает в локальный пульт с трекером откликов. Всё на твоём компьютере." />
+<meta property="og:description" content="Раз в 6 часов сам обходит два десятка источников, отбирает подходящее по твоим критериям и складывает в локальный пульт с трекером откликов." />
 <meta property="og:type" content="website" />
 <meta property="og:image" content="screenshot.png" />
 <meta name="twitter:card" content="summary_large_image" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
 
 <style>
   :root {
-    --bg:      #f7f7f5;
-    --bg-2:    #fefefe;
     --ink:     #14140f;
-    --ink-2:   #676760;
-    --ink-3:   #9a9a92;
-    --line:    #e7e7e2;
-    --line-2:  #dcdcd5;
+    --ink-2:   #5c5c55;
+    --ink-3:   #8e8e86;
+    --line:    #e6e6e0;
     --accent:  #1f7a48;
     --accent-wash: #e9f3ec;
-    --card:    #ffffff;
-    --shadow-s: 0 1px 2px rgba(20,20,15,.04), 0 4px 14px rgba(20,20,15,.05);
-    --shadow-m: 0 2px 6px rgba(20,20,15,.05), 0 18px 44px rgba(20,20,15,.08);
-    --r: 16px;
-    --maxw: 1080px;
+    --plate:   rgba(255,255,255,.62);
+    --plate-open: rgba(255,255,255,.88);
+    --gap: 4px;
+    --pad: 10px;
+    --head: 46px;
+    --r: 8px;
   }
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  html, body { height: 100%; }
   body {
-    margin: 0; background: var(--bg); color: var(--ink);
+    margin: 0; color: var(--ink);
     font-family: "Schibsted Grotesk", system-ui, sans-serif;
-    font-size: 17px; line-height: 1.55; letter-spacing: -.006em;
-    -webkit-font-smoothing: antialiased; overflow-x: hidden;
+    font-size: 16px; line-height: 1.5; letter-spacing: -.006em;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;                 /* один экран, без скролла страницы */
   }
-  /* фуллскрин-видеофон: фиксированный, покрывает вьюпорт, живёт под контентом.
-     Пока видео нет — показывается запасной цвет, страница не выглядит сломанной. */
-  .bgv {
-    position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover;
-    z-index: 0; background: #a9c1ef; /* запасной фон в духе референса */
-  }
-  /* лёгкая вуаль поверх видео — чтобы тёмный текст оставался читаемым */
-  .bgv-scrim {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background: linear-gradient(180deg, rgba(247,247,245,.34), rgba(247,247,245,.58));
-  }
-  main, header, footer { position: relative; z-index: 1; }
   a { color: inherit; text-decoration: none; }
   ::selection { background: var(--accent); color: #fff; }
-  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
   .mono { font-family: "Space Mono", ui-monospace, monospace; }
 
-  /* ── навбар ────────────────────────────────────────── */
-  header { padding: 18px 0 0; }
-  .nav {
-    max-width: var(--maxw); margin: 0 auto; display: flex; align-items: center; justify-content: space-between;
-    background: color-mix(in srgb, var(--bg-2) 78%, transparent); backdrop-filter: blur(10px);
-    border: 1px solid var(--line); border-radius: 999px; padding: 9px 9px 9px 20px;
-  }
-  .brand { display: inline-flex; align-items: center; gap: 9px; font-weight: 700; font-size: 19px; letter-spacing: -.03em; }
-  .mark {
-    width: 22px; height: 22px; border-radius: 7px; background: var(--ink); position: relative; flex: none;
-  }
-  .mark::before { content: ""; position: absolute; inset: 6px; border-radius: 3px; background: var(--accent); }
-  .mark::after { content: ""; position: absolute; left: 6px; top: 6px; width: 4px; height: 4px; border-radius: 50%; background: var(--bg-2); }
-  .nav-r { display: flex; align-items: center; gap: 6px; }
-  .navlink { font-size: 14.5px; font-weight: 500; color: var(--ink-2); padding: 9px 14px; border-radius: 999px; transition: color .15s, background .15s; }
-  .navlink:hover { color: var(--ink); background: var(--bg); }
-  .btn {
-    display: inline-flex; align-items: center; gap: 7px; font-weight: 600; font-size: 14.5px;
-    padding: 10px 18px; border-radius: 999px; border: 1px solid transparent;
-    transition: transform .16s ease, background .16s, color .16s, border-color .16s; white-space: nowrap; cursor: pointer;
-  }
-  .btn-solid { background: var(--ink); color: var(--bg-2); }
-  .btn-solid:hover { transform: translateY(-1px); background: var(--accent); }
-  .btn-ghost { background: transparent; border-color: var(--line-2); color: var(--ink); }
-  .btn-ghost:hover { border-color: var(--ink); }
+  /* фон-видео */
+  .bgv { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; background: #a9c1ef; }
+  .bgv-scrim { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(180deg, rgba(240,240,238,.20), rgba(240,240,238,.42)); }
 
-  /* ── герой ─────────────────────────────────────────── */
-  .hero { text-align: center; padding: clamp(56px, 10vw, 118px) 0 0; }
-  .pill-note {
-    display: inline-flex; align-items: center; gap: 9px; font-size: 13.5px; font-weight: 500; color: var(--ink-2);
-    background: var(--bg-2); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px 6px 10px; margin-bottom: 30px;
+  /* ── сцена: 4 плашки на всю высоту ──────────────────── */
+  .stage {
+    position: relative; z-index: 1;
+    height: 100dvh; padding: var(--pad);
+    display: flex; flex-direction: column; gap: var(--gap);
   }
-  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); position: relative; }
-  .live-dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1px solid var(--accent); opacity: .5; animation: ping 2s ease-out infinite; }
-  @keyframes ping { 0% { transform: scale(.6); opacity: .6 } 100% { transform: scale(1.8); opacity: 0 } }
-  h1 {
-    margin: 0; font-weight: 500; font-size: clamp(2.5rem, 6.4vw, 4.7rem);
-    line-height: 1.02; letter-spacing: -.035em; color: var(--ink);
+  .plate {
+    flex: 0 1 var(--head); min-height: var(--head); overflow: hidden;
+    border-radius: var(--r); background: var(--plate);
+    backdrop-filter: blur(22px) saturate(1.3); -webkit-backdrop-filter: blur(22px) saturate(1.3);
+    border: 1px solid rgba(255,255,255,.5);
+    display: flex; flex-direction: column;
+    transition: flex-grow .52s cubic-bezier(.22,.9,.2,1), background .3s;
   }
+  .plate.open { flex-grow: 1; background: var(--plate-open); }
+
+  /* шапка плашки: текст слева, иконка справа */
+  .head {
+    flex: none; height: var(--head); width: 100%;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 14px; background: none; border: 0; cursor: pointer;
+    font: inherit; color: inherit; text-align: left;
+  }
+  .head .ttl { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+  .plate.open .head .ttl { color: var(--accent); }
+  .head .ico { flex: none; display: grid; place-items: center; width: 20px; height: 20px; color: var(--ink-2); transition: transform .45s cubic-bezier(.22,.9,.2,1), color .3s; }
+  .plate.open .head .ico { transform: rotate(45deg); color: var(--accent); }
+  .head:hover .ico { color: var(--ink); }
+  .head .ico svg { width: 100%; height: 100%; }
+  .plate.link .head .ico { transform: none; }
+  .plate.link:hover { background: rgba(255,255,255,.8); }
+
+  /* тело плашки */
+  .body {
+    flex: 1; min-height: 0; opacity: 0; overflow: hidden;
+    padding: 0 14px; transition: opacity .3s ease .12s;
+  }
+  .plate.open .body { opacity: 1; overflow: auto; padding-bottom: 14px; }
+
+  /* ── контент: sasaki ───────────────────────────────── */
+  .duo { height: 100%; display: grid; grid-template-columns: 1.05fr .95fr; gap: 26px; min-height: 0; }
+  .duo > * { min-height: 0; }
+  h1 { margin: 0; font-weight: 500; font-size: clamp(1.7rem, 3.3vw, 2.9rem); line-height: 1.04; letter-spacing: -.032em; }
   h1 .g { color: var(--accent); }
-  .lead {
-    margin: 26px auto 0; max-width: 40ch; font-size: clamp(1.05rem, 2.1vw, 1.28rem);
-    color: var(--ink-2); line-height: 1.5; font-weight: 400;
-  }
-
-  /* копируемая команда */
+  .lead { margin: 14px 0 0; max-width: 38ch; color: var(--ink-2); font-size: 15.5px; }
   .cmd {
-    display: inline-flex; align-items: center; gap: 12px; margin: 36px auto 0;
-    background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 999px;
-    padding: 8px 8px 8px 20px; box-shadow: var(--shadow-s); max-width: 100%;
+    display: inline-flex; align-items: center; gap: 10px; margin-top: 20px; max-width: 100%;
+    background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 6px 6px 6px 16px;
   }
-  .cmd code { font-family: "Space Mono", monospace; font-size: 14.5px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cmd code { font-family: "Space Mono", monospace; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cmd code .pr { color: var(--accent); }
-  .copy {
-    flex: none; display: inline-flex; align-items: center; gap: 6px; border: 0; cursor: pointer;
-    background: var(--ink); color: var(--bg-2); font-family: inherit; font-weight: 600; font-size: 13px;
-    padding: 9px 14px; border-radius: 999px; transition: background .16s;
-  }
-  .copy:hover { background: var(--accent); }
-  .copy.done { background: var(--accent); }
-  .cmd-alt { margin: 16px 0 0; font-size: 14px; color: var(--ink-3); }
-  .cmd-alt a { color: var(--ink-2); border-bottom: 1px solid var(--line-2); padding-bottom: 1px; }
-  .cmd-alt a:hover { color: var(--accent); border-color: var(--accent); }
+  .copy { flex: none; display: inline-flex; align-items: center; gap: 6px; border: 0; cursor: pointer; background: var(--ink); color: #fff; font: inherit; font-weight: 600; font-size: 12.5px; padding: 8px 13px; border-radius: 999px; transition: background .16s; }
+  .copy:hover, .copy.done { background: var(--accent); }
+  .meta { margin-top: 16px; font-size: 12.5px; color: var(--ink-3); }
 
-  /* ── живая лента (демо продукта) ───────────────────── */
-  .feed-wrap { margin: clamp(48px, 8vw, 88px) auto 0; max-width: 620px; position: relative; }
-  .feed-label {
-    display: flex; align-items: center; justify-content: space-between; margin: 0 4px 12px;
-    font-size: 13px; color: var(--ink-3); font-weight: 500;
-  }
-  .feed-label .mono { font-size: 12px; letter-spacing: .02em; }
-  .feed {
-    height: 452px; overflow: hidden; position: relative;
-    -webkit-mask-image: linear-gradient(180deg, transparent, #000 11%, #000 84%, transparent);
-            mask-image: linear-gradient(180deg, transparent, #000 11%, #000 84%, transparent);
-  }
-  .feed-track { display: flex; flex-direction: column; gap: 10px; animation: stream 34s linear infinite; }
-  .feed-wrap:hover .feed-track { animation-play-state: paused; }
+  /* живая лента */
+  .feed-h { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink-3); margin-bottom: 8px; }
+  .feed { height: calc(100% - 26px); overflow: hidden; -webkit-mask-image: linear-gradient(180deg, transparent, #000 9%, #000 88%, transparent); mask-image: linear-gradient(180deg, transparent, #000 9%, #000 88%, transparent); }
+  .track { display: flex; flex-direction: column; gap: 7px; animation: stream 34s linear infinite; }
+  .feed:hover .track { animation-play-state: paused; }
   @keyframes stream { from { transform: translateY(0) } to { transform: translateY(-50%) } }
-  @media (prefers-reduced-motion: reduce) { .feed-track { animation: none } }
+  @media (prefers-reduced-motion: reduce) { .track { animation: none } }
+  .vac { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; }
+  .vac .d { text-align: center; line-height: 1; color: var(--ink-2); }
+  .vac .d b { display: block; font-size: 14px; color: var(--ink); }
+  .vac .d span { font-size: 10px; }
+  .vac .m { min-width: 0; }
+  .vac .t { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vac .s { font-size: 11.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vac .r { display: flex; align-items: center; gap: 9px; }
+  .fmt { font-size: 10.5px; color: var(--ink-2); background: #f5f5f2; border-radius: 5px; padding: 3px 7px; white-space: nowrap; }
+  .fmt.rem { color: var(--accent); background: var(--accent-wash); }
+  .src i { width: 16px; height: 16px; border-radius: 4px; display: grid; place-items: center; color: #fff; font-size: 8px; font-weight: 700; font-style: normal; }
 
-  .vac {
-    display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px;
-    background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; box-shadow: var(--shadow-s);
-  }
-  .vac .date { text-align: center; line-height: 1; color: var(--ink-2); flex: none; }
-  .vac .date b { display: block; font-size: 17px; font-weight: 700; color: var(--ink); letter-spacing: -.02em; }
-  .vac .date span { font-size: 11px; text-transform: lowercase; }
-  .vac .mid { min-width: 0; }
-  .vac .ttl { font-weight: 600; font-size: 15px; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .vac .sub { font-size: 12.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
-  .vac .right { display: flex; align-items: center; gap: 12px; flex: none; }
-  .fmt { font-size: 11.5px; font-weight: 500; color: var(--ink-2); background: var(--bg); border: 1px solid var(--line); padding: 4px 9px; border-radius: 7px; white-space: nowrap; }
-  .fmt.rem { color: var(--accent); background: var(--accent-wash); border-color: transparent; }
-  .src { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
-  .src i { width: 17px; height: 17px; border-radius: 5px; display: inline-grid; place-items: center; color: #fff; font-size: 8.5px; font-weight: 700; font-style: normal; flex: none; }
-  @media (max-width: 560px) { .vac .src span { display: none } .vac .right { gap: 9px } }
-
-  /* ── секции ────────────────────────────────────────── */
-  .sec { padding: clamp(72px, 11vw, 132px) 0; }
-  .sec-h { text-align: center; max-width: 24ch; margin: 0 auto; font-weight: 500; font-size: clamp(1.9rem, 4vw, 3rem); line-height: 1.08; letter-spacing: -.03em; }
-  .sec-sub { text-align: center; max-width: 46ch; margin: 18px auto 0; color: var(--ink-2); font-size: 1.08rem; }
-
-  .cols { margin-top: clamp(44px, 6vw, 72px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
-  .col { background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--r); padding: 30px 26px; }
-  .col .ic { width: 40px; height: 40px; border-radius: 11px; background: var(--accent-wash); display: grid; place-items: center; margin-bottom: 18px; }
-  .col .ic svg { width: 20px; height: 20px; stroke: var(--accent); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  .col h3 { margin: 0 0 8px; font-weight: 600; font-size: 1.2rem; letter-spacing: -.02em; }
-  .col p { margin: 0; color: var(--ink-2); font-size: 15px; line-height: 1.55; }
-
-  /* источники — спокойная строка имён */
-  .sources { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: clamp(48px,7vw,72px) 0; text-align: center; }
-  .sources .k { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
-  .sources .names { margin: 20px auto 0; max-width: 760px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 22px; color: var(--ink); font-size: 1.05rem; font-weight: 500; }
-  .sources .names span:nth-child(3n) { color: var(--ink-2); }
-  .sources .more { color: var(--accent) !important; }
-
-  /* установка */
-  .install-grid { margin-top: clamp(40px,6vw,64px); display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .panel { border: 1px solid var(--line); border-radius: var(--r); background: var(--bg-2); padding: 28px; min-width: 0; }
-  .panel h3 { margin: 0 0 6px; font-weight: 600; font-size: 1.15rem; letter-spacing: -.02em; }
-  .panel p { margin: 0 0 18px; color: var(--ink-2); font-size: 14.5px; }
-  .term { background: #16160f; border-radius: 12px; padding: 18px 18px; font-family: "Space Mono", monospace; font-size: 13.5px; line-height: 1.85; color: #eceae0; white-space: pre-wrap; word-break: break-word; }
+  /* ── контент: установка ────────────────────────────── */
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .box { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 16px; min-width: 0; }
+  .box h3 { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+  .box p { margin: 0 0 10px; font-size: 13px; color: var(--ink-2); }
+  .term { background: #16160f; border-radius: 8px; padding: 12px 14px; font-family: "Space Mono", monospace; font-size: 12px; line-height: 1.8; color: #eceae0; white-space: pre-wrap; word-break: break-word; }
   .term .pr { color: #7fcf9c; user-select: none; }
-  .term .cm { color: #86847a; }
-  .ask { background: #16160f; border-radius: 12px; padding: 18px; font-family: "Space Mono", monospace; font-size: 13px; line-height: 1.6; color: #eceae0; }
-  .ask .cm { color: #86847a; display: block; margin-bottom: 8px; }
-  .req { margin-top: 16px; font-size: 13.5px; color: var(--ink-3); }
-  .req code { font-family: "Space Mono", monospace; background: var(--bg); border: 1px solid var(--line); padding: 1px 6px; border-radius: 5px; font-size: 12.5px; }
+  .term .cm { color: #86847a; display: block; margin-bottom: 6px; }
+  .req { margin-top: 10px; font-size: 12px; color: var(--ink-3); }
+  .req code { font-family: "Space Mono", monospace; background: #f5f5f2; padding: 1px 5px; border-radius: 4px; font-size: 11.5px; }
 
-  /* фишка /add-source */
-  .super { text-align: center; }
-  .super .cmd { margin-top: 30px; }
-  .super .cmd code { white-space: normal; }
-
-  /* подвал */
-  footer { border-top: 1px solid var(--line); padding: 44px 0 60px; }
-  .foot { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: space-between; }
-  .foot-links { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 14.5px; color: var(--ink-2); }
-  .foot-links a:hover { color: var(--accent); }
-  .foot-meta { margin-top: 22px; font-family: "Space Mono", monospace; font-size: 12px; color: var(--ink-3); letter-spacing: .02em; }
+  /* ── контент: как работает ─────────────────────────── */
+  .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .card { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 16px; }
+  .card .ic { width: 30px; height: 30px; border-radius: 8px; background: var(--accent-wash); display: grid; place-items: center; margin-bottom: 10px; }
+  .card .ic svg { width: 16px; height: 16px; stroke: var(--accent); fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .card h3 { margin: 0 0 5px; font-size: 14px; font-weight: 600; }
+  .card p { margin: 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.5; }
+  .srcs { margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--line); }
+  .srcs .k { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+  .srcs .names { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px 16px; font-size: 13.5px; font-weight: 500; }
+  .srcs .names .more { color: var(--accent); }
 
   @media (max-width: 760px) {
-    .cols { grid-template-columns: 1fr; }
-    .install-grid { grid-template-columns: 1fr; }
-    .navlink { display: none; }
+    .duo, .two, .three { grid-template-columns: 1fr; }
+    .duo { display: block; }
+    .duo > div:last-child { display: none; }   /* лента целиком, вместе с подписью */
+    .three .card:nth-child(n+3) { display: none; }
   }
-  @media (max-width: 440px) {
-    .cmd { padding-left: 14px; gap: 8px; }
-    .cmd code { font-size: 13px; }
+  @media (max-width: 430px) {
+    .cmd code { font-size: 11.5px; }
     .copy span { display: none; }
   }
 </style>
 </head>
 <body>
 
-<!-- Фуллскрин-видеофон. Положи свой ролик в docs/bg.mp4 (muted-loop, желательно
-     ≤1080p и несколько МБ). Пока файла нет — показывается запасной цвет. -->
+<!-- Фоновое видео. Свой ролик — в docs/bg.mp4 (muted-loop). Пока файла нет — запасной цвет. -->
 <video class="bgv" autoplay muted loop playsinline preload="auto">
   <source src="bg.mp4" type="video/mp4" />
 </video>
 <div class="bgv-scrim"></div>
 
-<header>
-  <div class="wrap">
-    <nav class="nav">
-      <a href="#top" class="brand"><span class="mark"></span>sasaki</a>
-      <div class="nav-r">
-        <a class="navlink" href="#how">Как работает</a>
-        <a class="navlink" href="#install">Установка</a>
-        <a class="btn btn-ghost" href="https://github.com/peachcardinal/sasaki-agent" target="_blank" rel="noopener">GitHub ↗</a>
-      </div>
-    </nav>
-  </div>
-</header>
+<div class="stage">
 
-<main id="top">
-
-  <!-- ГЕРОЙ -->
-  <section class="hero">
-    <div class="wrap">
-      <div class="pill-note"><span class="live-dot"></span> опенсорс · работает у тебя на маке</div>
-      <h1>Собирает вакансии.<br>Отсеивает лишнее.<br>Ведёт твои <span class="g">отклики</span>.</h1>
-      <p class="lead">Локальный агент, который ищет тебе работу — сам, каждые 6 часов, пока ты занят делом.</p>
-
-      <div class="cmd">
-        <code id="cmd"><span class="pr">$ </span>git clone …/sasaki-agent &amp;&amp; npm run setup</code>
-        <button class="copy" id="copy" aria-label="Скопировать команду"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Копировать</span></button>
-      </div>
-      <p class="cmd-alt">Нужен только Node.js 21+. Или просто <a href="#install">попроси агента поставить</a>.</p>
-
-      <!-- ЖИВАЯ ЛЕНТА — продукт показывает сам себя -->
-      <div class="feed-wrap">
-        <div class="feed-label"><span>Лента находок</span><span class="mono">127.0.0.1:4321</span></div>
-        <div class="feed">
-          <div class="feed-track" id="track"></div>
+  <!-- 1 · sasaki -->
+  <section class="plate open" id="p1">
+    <button class="head" aria-expanded="true" aria-controls="b1">
+      <span class="ttl">sasaki</span>
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+    </button>
+    <div class="body" id="b1">
+      <div class="duo">
+        <div>
+          <h1>Собирает вакансии.<br>Отсеивает лишнее.<br>Ведёт твои <span class="g">отклики</span>.</h1>
+          <p class="lead">Локальный агент, который ищет тебе работу — сам, каждые 6 часов, пока ты занят делом.</p>
+          <div class="cmd">
+            <code><span class="pr">$ </span>git clone …/sasaki-agent &amp;&amp; npm run setup</code>
+            <button class="copy" id="copy" aria-label="Скопировать команду"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Копировать</span></button>
+          </div>
+          <p class="meta">Node.js 21+ · zero-dependency · MIT · by 10byrs</p>
+        </div>
+        <div>
+          <div class="feed-h"><span>Лента находок</span><span class="mono">127.0.0.1:4321</span></div>
+          <div class="feed"><div class="track" id="track"></div></div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- КАК РАБОТАЕТ -->
-  <section class="sec" id="how">
-    <div class="wrap">
-      <h2 class="sec-h">Один агент вместо десятка вкладок с досками вакансий.</h2>
-      <p class="sec-sub">Ставится за три команды и дальше работает в фоне. Тебе остаётся выбирать и откликаться.</p>
-      <div class="cols">
-        <div class="col">
-          <div class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
-          <h3>Обходит источники сам</h3>
-          <p>19 источников из коробки — hh, LinkedIn, getmatch, Хабр Карьера, карьерные сайты компаний и телеграм-каналы. Раз в 6 часов, без твоего участия.</p>
-        </div>
-        <div class="col">
-          <div class="ic"><svg viewBox="0 0 24 24"><path d="M3 5h18M6 12h12M10 19h4"/></svg></div>
-          <h3>Отбирает по критериям</h3>
-          <p>Направление, уровень, формат работы. Дубли между источниками отсеивает, показанное не повторяет — в ленте только новое и подходящее.</p>
-        </div>
-        <div class="col">
-          <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></div>
-          <h3>Ведёт твои отклики</h3>
-          <p>Воронка Новый → Отклик → Собес → Тестовое → Оффер, рядом — сопроводительное письмо. Ненужное скрываешь одной кнопкой.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ИСТОЧНИКИ -->
-  <section class="sources">
-    <div class="wrap">
-      <div class="k">19 источников · один поток</div>
-      <div class="names">
-        <span>hh.ru</span><span>LinkedIn</span><span>getmatch</span><span>Хабр Карьера</span>
-        <span>designer.ru</span><span>hirehi</span><span>finder</span><span>Telegram</span>
-        <span>Яндекс</span><span>VK</span><span>Т-Банк</span><span>Авито</span><span>X5</span>
-        <span>МТС</span><span>Магнит</span><span>Wildberries</span><span>Точка</span>
-        <span>Альфа-Банк</span><span>2ГИС</span><span class="more">+ свой сайт</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- УСТАНОВКА -->
-  <section class="sec" id="install">
-    <div class="wrap">
-      <h2 class="sec-h">Три команды — и пульт открыт.</h2>
-      <p class="sec-sub">Установка неинтерактивная: ставит автозапуск, поднимает пульт и сама открывает его в браузере.</p>
-      <div class="install-grid">
-        <div class="panel">
+  <!-- 2 · установка -->
+  <section class="plate" id="p2">
+    <button class="head" aria-expanded="false" aria-controls="b2">
+      <span class="ttl">установка</span>
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+    </button>
+    <div class="body" id="b2">
+      <div class="two">
+        <div class="box">
           <h3>Руками</h3>
-          <p>В терминале, по порядку:</p>
+          <p>Три команды в терминале:</p>
           <div class="term"><span class="pr">$ </span>git clone https://github.com/peachcardinal/sasaki-agent.git
 <span class="pr">$ </span>cd sasaki-agent
 <span class="pr">$ </span>npm run setup</div>
           <p class="req">Нужен только <code>Node.js 21+</code> — проверить: <code>node -v</code></p>
         </div>
-        <div class="panel">
+        <div class="box">
           <h3>Или попроси агента</h3>
-          <p>Есть Claude Code или другой кодовый агент? Открой его в пустой папке и скажи:</p>
-          <div class="ask"><span class="cm">// вставь как есть</span>Установи мне агента из github.com/peachcardinal/sasaki-agent — склонируй, запусти установку и расскажи, как пользоваться</div>
-          <p class="req">Вопросов агенту не задают — он не застрянет на полпути.</p>
+          <p>Есть Claude Code или другой кодовый агент? Скажи ему в пустой папке:</p>
+          <div class="term"><span class="cm">// вставь как есть</span>Установи мне агента из github.com/peachcardinal/sasaki-agent — склонируй, запусти установку и расскажи, как пользоваться</div>
+          <p class="req">Установка неинтерактивная — агент не застрянет на вопросах.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ФИШКА -->
-  <section class="sec super">
-    <div class="wrap">
-      <h2 class="sec-h">Увидел вакансию на сайте, которого нет в списке? <span class="g">Добавь его.</span></h2>
-      <p class="sec-sub">Готовый агрегатор заперт в своём списке источников. У sasaki он открытый: скажи агенту одну команду — он сам разберётся, как сайт отдаёт данные, напишет к нему адаптер и подключит.</p>
-      <div class="cmd">
-        <code class="mono"><span class="pr">/add-source</span> https://careers.example.com/vacancies</code>
+  <!-- 3 · как работает -->
+  <section class="plate" id="p3">
+    <button class="head" aria-expanded="false" aria-controls="b3">
+      <span class="ttl">как работает</span>
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+    </button>
+    <div class="body" id="b3">
+      <div class="three">
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
+          <h3>Обходит источники сам</h3>
+          <p>19 источников из коробки — hh, LinkedIn, getmatch, Хабр Карьера, карьерные сайты компаний и телеграм-каналы. Раз в 6 часов, в фоне.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M3 5h18M6 12h12M10 19h4"/></svg></div>
+          <h3>Отбирает по критериям</h3>
+          <p>Направление, уровень, формат работы. Дубли между источниками отсеивает, показанное не повторяет.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></div>
+          <h3>Ведёт твои отклики</h3>
+          <p>Воронка Новый → Отклик → Собес → Тестовое → Оффер, рядом — сопроводительное письмо. Всё на твоём компьютере.</p>
+        </div>
+      </div>
+      <div class="srcs">
+        <div class="k">19 источников · один поток</div>
+        <div class="names">
+          <span>hh.ru</span><span>LinkedIn</span><span>getmatch</span><span>Хабр Карьера</span>
+          <span>designer.ru</span><span>hirehi</span><span>finder</span><span>Telegram</span>
+          <span>Яндекс</span><span>VK</span><span>Т-Банк</span><span>Авито</span><span>X5</span>
+          <span>МТС</span><span>Магнит</span><span>Wildberries</span><span>Точка</span>
+          <span>Альфа-Банк</span><span>2ГИС</span><span class="more">+ свой сайт</span>
+        </div>
       </div>
     </div>
   </section>
 
-</main>
+  <!-- 4 · github -->
+  <a class="plate link" href="https://github.com/peachcardinal/sasaki-agent" target="_blank" rel="noopener">
+    <span class="head">
+      <span class="ttl">github</span>
+      <span class="ico"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></span>
+    </span>
+  </a>
 
-<footer>
-  <div class="wrap">
-    <div class="foot">
-      <a href="#top" class="brand"><span class="mark"></span>sasaki</a>
-      <div class="foot-links">
-        <a href="https://github.com/peachcardinal/sasaki-agent" target="_blank" rel="noopener">GitHub</a>
-        <a href="https://github.com/peachcardinal/sasaki-agent/blob/main/docs/setup.md" target="_blank" rel="noopener">Документация</a>
-        <a href="https://github.com/peachcardinal/sasaki-agent#readme" target="_blank" rel="noopener">Как устроено</a>
-        <a href="#install">Установка</a>
-      </div>
-    </div>
-    <div class="foot-meta">Node.js · zero-dependency · MIT · by 10byrs</div>
-  </div>
-</footer>
+</div>
 
 <script>
+  // аккордеон: открыта всегда ровно одна плашка
+  (function () {
+    var plates = [].slice.call(document.querySelectorAll(".plate:not(.link)"));
+    plates.forEach(function (p) {
+      p.querySelector(".head").addEventListener("click", function () {
+        var wasOpen = p.classList.contains("open");
+        plates.forEach(function (o) {
+          o.classList.remove("open");
+          o.querySelector(".head").setAttribute("aria-expanded", "false");
+        });
+        if (!wasOpen) {
+          p.classList.add("open");
+          p.querySelector(".head").setAttribute("aria-expanded", "true");
+        }
+      });
+    });
+  })();
+
   // копирование команды
   (function () {
     var btn = document.getElementById("copy");
     var full = "git clone https://github.com/peachcardinal/sasaki-agent.git && cd sasaki-agent && npm run setup";
-    var icon = btn.innerHTML; // иконка + текст «Копировать»
+    var icon = btn.innerHTML;
     function feedback() {
       btn.classList.add("done");
-      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Скопировано</span>';
+      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Скопировано</span>';
       setTimeout(function () { btn.classList.remove("done"); btn.innerHTML = icon; }, 1800);
     }
-    function legacyCopy() {
+    function legacy() {
       var ta = document.createElement("textarea");
       ta.value = full; ta.style.position = "fixed"; ta.style.opacity = "0";
       document.body.appendChild(ta); ta.select();
       try { document.execCommand("copy"); } catch (e) {}
       document.body.removeChild(ta);
     }
-    btn.addEventListener("click", function () {
-      // фидбек всегда; clipboard API там, где доступен, иначе execCommand-фолбэк
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(full).then(feedback, function () { legacyCopy(); feedback(); });
-      } else { legacyCopy(); feedback(); }
+        navigator.clipboard.writeText(full).then(feedback, function () { legacy(); feedback(); });
+      } else { legacy(); feedback(); }
     });
   })();
 
-  // живая лента: реалистичные карточки, бесконечная прокрутка (трек продублирован)
+  // живая лента находок
   (function () {
     var S = {
-      hh:   ["hh",  "#d6001c"], gm: ["gm", "#0ea5a5"], ya: ["Я", "#fc3f1d"],
-      vk:   ["VK",  "#0077ff"], av: ["A",  "#00a0e9"], gis:["2", "#19aa1e"],
-      alfa: ["А",   "#ef3124"], x5: ["X5", "#e11a2c"], tg: ["TG","#2aabee"],
-      tb:   ["Т",   "#111"],    mts:["М",  "#e30611"]
+      hh:["hh","#d6001c"], gm:["gm","#0ea5a5"], ya:["Я","#fc3f1d"], vk:["VK","#0077ff"],
+      av:["A","#00a0e9"], gis:["2","#19aa1e"], alfa:["А","#ef3124"], x5:["X5","#e11a2c"],
+      tb:["Т","#111"], mts:["М","#e30611"]
     };
+    var N = { hh:"hh", gm:"getmatch", ya:"Яндекс", vk:"VK", av:"Авито", gis:"2ГИС", alfa:"Альфа", x5:"X5", tb:"Т-Банк", mts:"МТС" };
     var data = [
       ["21","июл","Продуктовый дизайнер","Туту · senior","удалённо",1,"hh"],
       ["21","июл","Design Team Lead (Web, TV & Auto)","Звук · lead","гибрид",0,"gm"],
@@ -399,19 +332,14 @@
       ["16","июл","Дизайнер продукта в дизайн-систему","Т-Банк · senior","удалённо",1,"tb"]
     ];
     function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
-    function card(v){
+    var html = data.map(function (v) {
       var s = S[v[6]];
-      return '<div class="vac">' +
-        '<div class="date"><b>'+v[0]+'</b><span>'+v[1]+'</span></div>' +
-        '<div class="mid"><div class="ttl">'+esc(v[2])+'</div><div class="sub">'+esc(v[3])+'</div></div>' +
-        '<div class="right">' +
-          '<span class="fmt'+(v[5]?' rem':'')+'">'+v[4]+'</span>' +
-          '<span class="src"><i style="background:'+s[1]+'">'+s[0]+'</i><span>'+v[6].replace("gm","getmatch").replace("gis","2gis").replace("tb","Т-Банк").replace("mts","МТС").replace("av","Авито").replace("alfa","Альфа")+'</span></span>' +
-        '</div>' +
-      '</div>';
-    }
-    var html = data.map(card).join("");
-    document.getElementById("track").innerHTML = html + html; // дубль для бесшовной петли
+      return '<div class="vac"><div class="d"><b>'+v[0]+'</b><span>'+v[1]+'</span></div>' +
+        '<div class="m"><div class="t">'+esc(v[2])+'</div><div class="s">'+esc(v[3])+'</div></div>' +
+        '<div class="r"><span class="fmt'+(v[5]?' rem':'')+'">'+v[4]+'</span>' +
+        '<span class="src"><i style="background:'+s[1]+'">'+s[0]+'</i></span></div></div>';
+    }).join("");
+    document.getElementById("track").innerHTML = html + html;
   })();
 </script>
 </body>
