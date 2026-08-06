@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>sasaki — агент, который сам ищет тебе работу</title>
+<meta name="description" content="Локальный агент поиска работы для дизайнеров. Раз в 6 часов обходит два десятка источников, отбирает подходящее и складывает в пульт с трекером откликов. Всё на твоём компьютере, без регистраций." />
+
+<meta property="og:title" content="sasaki — агент, который сам ищет тебе работу" />
+<meta property="og:description" content="Раз в 6 часов обходит два десятка источников, отбирает подходящее по твоим критериям и складывает в локальный пульт с трекером откликов. Всё на твоём компьютере." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="screenshot.png" />
+<meta name="twitter:card" content="summary_large_image" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --paper:   #f4efe4;
+    --paper-2: #ece5d6;
+    --ink:     #1a1712;
+    --ink-2:   #574f42;
+    --ink-3:   #8a8072;
+    --line:    #d8cfbd;
+    --line-2:  #c6bca6;
+    --accent:  #1f6b45;
+    --accent-2:#2c8a58;
+    --accent-wash: #e3ecdf;
+    --term-bg: #14130f;
+    --term-fg: #ece5d6;
+    --term-dim:#8f887a;
+    --term-green: #7bc99a;
+    --shadow: 24px 24px 0 rgba(26,23,18,.06);
+    --maxw: 1120px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Hanken Grotesk", system-ui, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  /* тёплое бумажное зерно поверх фона */
+  body::before {
+    content: "";
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    opacity: .5; mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+  }
+  main, header, footer { position: relative; z-index: 1; }
+
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: var(--accent); color: var(--paper); }
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
+
+  h1, h2, h3 { font-family: "Fraunces", Georgia, serif; font-weight: 500; margin: 0; letter-spacing: -.01em; }
+  .serif-italic { font-style: italic; font-weight: 400; }
+  .mono { font-family: "Space Mono", ui-monospace, monospace; }
+
+  /* ── шапка ─────────────────────────────────────────── */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    backdrop-filter: blur(8px);
+    background: color-mix(in srgb, var(--paper) 82%, transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar { display: flex; align-items: center; justify-content: space-between; height: 66px; }
+  .brand { display: flex; align-items: baseline; gap: 3px; font-family: "Fraunces", serif; font-size: 24px; font-weight: 600; letter-spacing: -.02em; }
+  .brand .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: inline-block; transform: translateY(-1px); }
+  .nav-r { display: flex; align-items: center; gap: 10px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 600; font-size: 15px; padding: 10px 18px; border-radius: 999px;
+    border: 1px solid var(--ink); transition: transform .15s ease, background .15s ease, color .15s ease;
+    white-space: nowrap;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn-solid { background: var(--ink); color: var(--paper); }
+  .btn-solid:hover { background: var(--accent); border-color: var(--accent); }
+  .btn-ghost { background: transparent; }
+  .btn-ghost:hover { background: var(--ink); color: var(--paper); }
+  .link-plain { font-weight: 600; font-size: 15px; padding: 10px 6px; border-bottom: 2px solid transparent; }
+  .link-plain:hover { border-bottom-color: var(--accent); }
+
+  /* ── герой ─────────────────────────────────────────── */
+  .hero { padding: clamp(56px, 11vw, 128px) 0 clamp(40px, 7vw, 84px); }
+  .eyebrow {
+    font-family: "Space Mono", monospace; font-size: 13px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 26px;
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .eyebrow::before { content: ""; width: 26px; height: 1px; background: var(--accent); }
+  .hero h1 {
+    font-size: clamp(2.9rem, 7.2vw, 5.6rem);
+    line-height: .98; letter-spacing: -.03em; font-weight: 550;
+    max-width: 15ch;
+  }
+  .hero h1 em { color: var(--accent); }
+  .hero p.lead {
+    margin: 30px 0 0; max-width: 46ch; font-size: clamp(1.05rem, 2.1vw, 1.3rem);
+    color: var(--ink-2); line-height: 1.5;
+  }
+  .hero-cta { margin-top: 40px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .hero-cta .btn { padding: 14px 26px; font-size: 16px; }
+  .hero-meta {
+    margin-top: 30px; font-family: "Space Mono", monospace; font-size: 13.5px;
+    color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 8px 16px;
+  }
+  .hero-meta span { display: inline-flex; align-items: center; gap: 8px; }
+  .hero-meta span::before { content: "→"; color: var(--accent); }
+
+  /* staggered reveal */
+  .reveal { opacity: 0; transform: translateY(18px); animation: rise .9s cubic-bezier(.2,.7,.2,1) forwards; }
+  .d1 { animation-delay: .05s } .d2 { animation-delay: .16s } .d3 { animation-delay: .27s }
+  .d4 { animation-delay: .38s } .d5 { animation-delay: .49s }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .reveal { animation: none; opacity: 1; transform: none; } }
+
+  /* ── скриншот ──────────────────────────────────────── */
+  .shot { padding-bottom: clamp(48px, 8vw, 96px); }
+  .shot-frame {
+    border: 1px solid var(--line-2); border-radius: 16px; background: var(--paper-2);
+    padding: 12px; box-shadow: var(--shadow); position: relative;
+  }
+  .shot-frame::after {
+    content: "127.0.0.1:4321"; position: absolute; top: -11px; right: 22px;
+    font-family: "Space Mono", monospace; font-size: 12px; color: var(--ink-3);
+    background: var(--paper); padding: 0 10px; letter-spacing: .04em;
+  }
+  .shot-chrome { display: flex; gap: 7px; padding: 6px 4px 12px; }
+  .shot-chrome i { width: 11px; height: 11px; border-radius: 50%; background: var(--line-2); }
+  .shot-frame img { display: block; width: 100%; border-radius: 8px; border: 1px solid var(--line); }
+  .shot-cap { margin-top: 18px; text-align: center; color: var(--ink-3); font-size: 14.5px; }
+
+  /* ── общий заголовок секции ────────────────────────── */
+  .sec { padding: clamp(56px, 9vw, 104px) 0; border-top: 1px solid var(--line); }
+  .sec-label {
+    font-family: "Space Mono", monospace; font-size: 13px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink-3); margin-bottom: 18px;
+  }
+  .sec-label b { color: var(--accent); font-weight: 700; }
+  .sec-title { font-size: clamp(2rem, 4.4vw, 3.2rem); line-height: 1.02; letter-spacing: -.025em; max-width: 20ch; }
+
+  /* ── возможности ───────────────────────────────────── */
+  .feat-grid { margin-top: 52px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .feat { background: var(--paper); padding: 34px 32px; transition: background .25s ease; }
+  .feat:hover { background: var(--paper-2); }
+  .feat .num { font-family: "Space Mono", monospace; font-size: 13px; color: var(--accent); letter-spacing: .08em; }
+  .feat h3 { font-size: 1.55rem; margin: 14px 0 10px; letter-spacing: -.02em; line-height: 1.1; }
+  .feat p { margin: 0; color: var(--ink-2); font-size: 15.5px; line-height: 1.55; }
+  .feat .tag { display: inline-block; margin-top: 16px; font-family: "Space Mono", monospace; font-size: 12px; color: var(--accent); background: var(--accent-wash); padding: 4px 10px; border-radius: 6px; }
+
+  /* ── честно ────────────────────────────────────────── */
+  .honest { border-top: 1px solid var(--line); }
+  .honest .wrap { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 40px; padding: clamp(44px,7vw,72px) 28px; }
+  .honest h2 { font-size: clamp(1.7rem, 3.4vw, 2.4rem); letter-spacing: -.02em; }
+  .honest ul { margin: 0; padding: 0; list-style: none; }
+  .honest li { padding: 14px 0; border-bottom: 1px solid var(--line); color: var(--ink-2); display: flex; gap: 14px; font-size: 16px; }
+  .honest li:last-child { border-bottom: 0; }
+  .honest li::before { content: "—"; color: var(--accent); font-weight: 700; }
+  .honest li b { color: var(--ink); font-weight: 600; }
+
+  /* ── источники ─────────────────────────────────────── */
+  .src-flow { margin-top: 40px; display: flex; flex-wrap: wrap; gap: 10px; }
+  .src-flow span {
+    font-size: 15px; padding: 8px 16px; border: 1px solid var(--line-2); border-radius: 999px;
+    background: var(--paper); transition: transform .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .src-flow span:hover { transform: translateY(-2px); border-color: var(--accent); color: var(--accent); }
+  .src-flow span.more { border-style: dashed; color: var(--ink-3); }
+
+  /* ── установка / терминал ──────────────────────────── */
+  .install .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+  /* grid-элементы по умолчанию min-width:auto — широкое моно-содержимое
+     (git clone URL) распирало бы колонку шире экрана; min-width:0 держит их в рамках */
+  .install .term, .install .install-card { min-width: 0; }
+  .term {
+    background: var(--term-bg); color: var(--term-fg); border-radius: 14px; overflow: hidden;
+    font-family: "Space Mono", monospace; box-shadow: var(--shadow);
+  }
+  .term-head { display: flex; align-items: center; gap: 8px; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.08); font-size: 12.5px; color: var(--term-dim); }
+  .term-head i { width: 11px; height: 11px; border-radius: 50%; background: #3a3730; }
+  .term-head i:nth-child(1){ background:#c1553f } .term-head i:nth-child(2){ background:#c9a54a } .term-head i:nth-child(3){ background:#4f8a5f }
+  .term-head span { margin-left: auto; letter-spacing: .04em; }
+  .term-body { padding: 22px 20px; font-size: 14px; line-height: 1.9; overflow-x: auto; }
+  .term-body .l { white-space: pre; }
+  .term-body .p { color: var(--term-green); user-select: none; }
+  .term-body .c { color: var(--term-dim); }
+  .install-card { border: 1px solid var(--line); border-radius: 14px; padding: 30px; background: var(--paper); }
+  .install-card h3 { font-size: 1.5rem; margin-bottom: 8px; letter-spacing: -.02em; }
+  .install-card p { color: var(--ink-2); font-size: 15.5px; margin: 0 0 18px; }
+  .prompt-box { background: var(--term-bg); color: var(--term-fg); border-radius: 10px; padding: 18px; font-family: "Space Mono", monospace; font-size: 13.5px; line-height: 1.65; }
+  .prompt-box .c { color: var(--term-dim); display: block; margin-bottom: 8px; }
+  .install-note { margin-top: 18px; font-size: 14px; color: var(--ink-3); }
+  .install-note code { font-family: "Space Mono", monospace; background: var(--paper-2); padding: 2px 6px; border-radius: 5px; font-size: 13px; }
+
+  /* ── свой сайт ─────────────────────────────────────── */
+  .super { border-top: 1px solid var(--line); }
+  .super-inner {
+    background: var(--ink); color: var(--paper); border-radius: 20px;
+    padding: clamp(40px, 6vw, 68px); margin: clamp(56px,9vw,104px) 0; position: relative; overflow: hidden;
+  }
+  .super-inner::before {
+    content: ""; position: absolute; right: -60px; top: -60px; width: 320px; height: 320px;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 68%); opacity: .35;
+  }
+  .super-inner .sec-label { color: var(--term-green); position: relative; }
+  .super-inner h2 { font-size: clamp(1.9rem, 4vw, 3rem); letter-spacing: -.025em; max-width: 18ch; position: relative; }
+  .super-inner h2 em { color: var(--term-green); }
+  .super-inner p { color: #c9c2b3; max-width: 52ch; margin: 22px 0 26px; position: relative; font-size: 16.5px; }
+  .super-cmd {
+    display: inline-block; font-family: "Space Mono", monospace; font-size: 14.5px;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
+    padding: 12px 18px; border-radius: 10px; position: relative;
+    max-width: 100%; overflow-wrap: anywhere;
+  }
+  .super-cmd b { color: var(--term-green); }
+
+  /* ── подвал ────────────────────────────────────────── */
+  footer { border-top: 1px solid var(--line); padding: 56px 0 72px; }
+  .foot { display: flex; flex-wrap: wrap; gap: 28px; justify-content: space-between; align-items: flex-end; }
+  .foot .brand { font-size: 30px; }
+  .foot-links { display: flex; flex-wrap: wrap; gap: 8px 26px; font-size: 15.5px; }
+  .foot-links a { border-bottom: 2px solid transparent; padding-bottom: 2px; }
+  .foot-links a:hover { border-bottom-color: var(--accent); color: var(--accent); }
+  .foot-meta { margin-top: 30px; font-family: "Space Mono", monospace; font-size: 12.5px; color: var(--ink-3); letter-spacing: .03em; }
+
+  /* ── адаптив ───────────────────────────────────────── */
+  @media (max-width: 860px) {
+    .feat-grid { grid-template-columns: 1fr; }
+    .honest .wrap, .install .wrap { grid-template-columns: 1fr; }
+    .install .wrap { gap: 22px; }
+    .link-plain.hide-sm { display: none; }
+  }
+  @media (max-width: 520px) {
+    body { font-size: 16px; }
+    .wrap { padding: 0 20px; }
+    .hero-cta .btn { flex: 1 1 auto; justify-content: center; }
+    .shot-frame::after { right: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a href="#top" class="brand">sasaki<span class="dot"></span></a>
+    <nav class="nav-r">
+      <a class="link-plain hide-sm" href="#features">Что умеет</a>
+      <a class="link-plain hide-sm" href="#install">Установка</a>
+      <a class="btn btn-ghost" href="https://github.com/peachcardinal/sasaki-agent" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ГЕРОЙ -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="eyebrow reveal d1">опенсорс · работает у тебя на маке</div>
+      <h1 class="reveal d2">Вакансии ищет агент.<br>Ты только <em class="serif-italic">выбираешь</em>.</h1>
+      <p class="lead reveal d3">Раз в 6 часов sasaki сам обходит два десятка источников, отбирает подходящее по твоим критериям и складывает в локальный пульт — с фильтрами и трекером откликов. Дубли отсеивает, показанное не повторяет.</p>
+      <div class="hero-cta reveal d4">
+        <a class="btn btn-solid" href="#install">Поставить за три команды</a>
+        <a class="btn btn-ghost" href="https://github.com/peachcardinal/sasaki-agent" target="_blank" rel="noopener">Смотреть код ↗</a>
+      </div>
+      <div class="hero-meta reveal d5">
+        <span>Node.js 21+</span>
+        <span>без регистраций и токенов</span>
+        <span>ничего не уходит наружу</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- СКРИНШОТ -->
+  <section class="shot">
+    <div class="wrap">
+      <div class="shot-frame reveal d5">
+        <div class="shot-chrome"><i></i><i></i><i></i></div>
+        <img src="screenshot.png" alt="Пульт sasaki: слева фильтры по уровню, направлению, формату и периоду, справа лента найденных вакансий с трекером откликов" loading="lazy" />
+      </div>
+      <p class="shot-cap">Пульт живёт на <span class="mono">127.0.0.1:4321</span> — открывается в браузере, наружу не торчит.</p>
+    </div>
+  </section>
+
+  <!-- ВОЗМОЖНОСТИ -->
+  <section class="sec" id="features">
+    <div class="wrap">
+      <div class="sec-label"><b>01</b> / что умеет</div>
+      <h2 class="sec-title">Один агент вместо десятка вкладок с досками вакансий.</h2>
+      <div class="feat-grid">
+        <div class="feat">
+          <div class="num">01</div>
+          <h3>Обходит источники сам</h3>
+          <p>19 источников из коробки: hh, LinkedIn, getmatch, Хабр Карьера, карьерные сайты компаний и публичные телеграм-каналы. Раз в 6 часов, в фоне, без твоего участия.</p>
+          <span class="tag">каждые 6 часов</span>
+        </div>
+        <div class="feat">
+          <div class="num">02</div>
+          <h3>Всё остаётся у тебя</h3>
+          <p>Критерии, найденные вакансии, статусы откликов и черновики писем лежат на твоём компьютере. Никакого облака, аккаунтов и телеметрии — наружу не уходит ничего.</p>
+          <span class="tag">локально и приватно</span>
+        </div>
+        <div class="feat">
+          <div class="num">03</div>
+          <h3>Ведёт твои отклики</h3>
+          <p>Переносишь вакансию в «Отклики» и ведёшь воронку: Новый → Отклик → Собес → Тестовое → Оффер. Рядом — сопроводительное письмо. Ненужное скрываешь одной кнопкой.</p>
+          <span class="tag">трекер откликов</span>
+        </div>
+        <div class="feat">
+          <div class="num">04</div>
+          <h3>Учится новым сайтам</h3>
+          <p>Список источников не зафиксирован. Понравился сайт, которого нет в списке — говоришь агенту одну команду, и он сам пишет к нему адаптер и подключает.</p>
+          <span class="tag mono">/add-source</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ЧЕСТНО -->
+  <section class="honest">
+    <div class="wrap">
+      <div>
+        <div class="sec-label"><b>02</b> / без магии</div>
+        <h2>Чего <span class="serif-italic" style="font-family:Fraunces">не</span> умеет</h2>
+      </div>
+      <ul>
+        <li><span><b>Не откликается за тебя.</b> Собирает и раскладывает — решаешь и пишешь ты.</span></li>
+        <li><span><b>Не оценивает релевантность умнее ключевых слов.</b> Фильтр по названию, грейду и формату; иногда мусор пролезает.</span></li>
+        <li><span><b>Не лезет в закрытое.</b> Только то, что доступно публично — без логинов и риска бана.</span></li>
+        <li><span><b>Не заменяет нетворк.</b> Часть хороших вакансий всё равно приходит не с досок.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ИСТОЧНИКИ -->
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-label"><b>03</b> / источники</div>
+      <h2 class="sec-title">Два десятка мест — в одной ленте.</h2>
+      <div class="src-flow">
+        <span>hh.ru</span><span>LinkedIn</span><span>getmatch</span><span>Хабр Карьера</span>
+        <span>designer.ru</span><span>hirehi</span><span>finder</span><span>Telegram-каналы</span>
+        <span>Яндекс</span><span>VK</span><span>Т-Банк</span><span>Авито</span><span>X5</span>
+        <span>МТС</span><span>Магнит</span><span>Wildberries</span><span>Точка</span>
+        <span>Альфа-Банк</span><span>2ГИС</span>
+        <span class="more">+ свой сайт за пару минут</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- УСТАНОВКА -->
+  <section class="sec install" id="install">
+    <div class="wrap" style="display:block">
+      <div class="sec-label"><b>04</b> / установка</div>
+      <h2 class="sec-title" style="margin-bottom:52px">Три команды — и пульт открыт.</h2>
+    </div>
+    <div class="wrap">
+      <div class="term">
+        <div class="term-head"><i></i><i></i><i></i><span>bash</span></div>
+        <div class="term-body">
+<div class="l"><span class="p">$ </span>git clone https://github.com/peachcardinal/sasaki-agent.git</div>
+<div class="l"><span class="p">$ </span>cd sasaki-agent</div>
+<div class="l"><span class="p">$ </span>npm run setup</div>
+<div class="l">&nbsp;</div>
+<div class="l c"># ставит автозапуск, поднимает пульт</div>
+<div class="l c"># и сам открывает 127.0.0.1:4321</div>
+        </div>
+      </div>
+      <div class="install-card">
+        <h3>Или попроси агента</h3>
+        <p>Есть Claude Code или другой кодовый агент? Открой его в пустой папке и скажи:</p>
+        <div class="prompt-box">
+          <span class="c">// вставь как есть</span>
+          Установи мне агента из github.com/peachcardinal/sasaki-agent — склонируй, запусти установку и расскажи, как пользоваться
+        </div>
+        <p class="install-note">Установка неинтерактивная — вопросов агенту не задают, он не застрянет. Нужен только <code>Node.js 21+</code> (проверить: <code>node -v</code>). Дальше в пульте отметь направление и уровень и жми «Найти вакансии».</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- СВОЙ САЙТ -->
+  <section class="super">
+    <div class="wrap">
+      <div class="super-inner">
+        <div class="sec-label"><b>05</b> / чем отличается от агрегаторов</div>
+        <h2>Увидел вакансию на сайте, которого нет в списке? <em class="serif-italic">Добавь его.</em></h2>
+        <p>Готовый агрегатор живёт своим списком источников, и ты в нём заперт. У sasaki список открытый: открываешь папку проекта в агенте и говоришь одну команду — он сам разберётся, как сайт отдаёт данные, напишет адаптер, проверит на живых вакансиях и подключит. Новый источник появится в пульте сам.</p>
+        <span class="super-cmd"><b>/add-source</b> https://careers.example.com/vacancies</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <div class="brand">sasaki<span class="dot"></span></div>
+        <div style="color:var(--ink-2); margin-top:10px; max-width:34ch; font-size:15px;">Личный агент поиска работы. Ставится за три команды, работает всегда.</div>
+      </div>
+      <div class="foot-links">
+        <a href="https://github.com/peachcardinal/sasaki-agent" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/peachcardinal/sasaki-agent/blob/main/docs/setup.md" target="_blank" rel="noopener">Документация</a>
+        <a href="https://github.com/peachcardinal/sasaki-agent#readme" target="_blank" rel="noopener">Как это работает</a>
+        <a href="#install">Установка</a>
+      </div>
+    </div>
+    <div class="foot-meta">Node.js · zero-dependency · MIT · сделано by 10byrs</div>
+  </div>
+</footer>
+
+</body>
+</html>
