@@ -41,12 +41,16 @@
     font-size: 17px; line-height: 1.55; letter-spacing: -.006em;
     -webkit-font-smoothing: antialiased; overflow-x: hidden;
   }
-  /* очень мягкое свечение за героем — атмосфера, почти незаметная */
-  body::before {
-    content: ""; position: fixed; left: 50%; top: -12%; z-index: 0; pointer-events: none;
-    width: 900px; height: 620px; transform: translateX(-50%);
-    background: radial-gradient(50% 50% at 50% 50%, rgba(31,122,72,.10), transparent 70%);
-    filter: blur(20px);
+  /* фуллскрин-видеофон: фиксированный, покрывает вьюпорт, живёт под контентом.
+     Пока видео нет — показывается запасной цвет, страница не выглядит сломанной. */
+  .bgv {
+    position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    z-index: 0; background: #a9c1ef; /* запасной фон в духе референса */
+  }
+  /* лёгкая вуаль поверх видео — чтобы тёмный текст оставался читаемым */
+  .bgv-scrim {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: linear-gradient(180deg, rgba(247,247,245,.34), rgba(247,247,245,.58));
   }
   main, header, footer { position: relative; z-index: 1; }
   a { color: inherit; text-decoration: none; }
@@ -209,6 +213,13 @@
 </style>
 </head>
 <body>
+
+<!-- Фуллскрин-видеофон. Положи свой ролик в docs/bg.mp4 (muted-loop, желательно
+     ≤1080p и несколько МБ). Пока файла нет — показывается запасной цвет. -->
+<video class="bgv" autoplay muted loop playsinline preload="auto">
+  <source src="bg.mp4" type="video/mp4" />
+</video>
+<div class="bgv-scrim"></div>
 
 <header>
   <div class="wrap">
