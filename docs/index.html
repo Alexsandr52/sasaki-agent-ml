@@ -115,7 +115,11 @@
   h1 { margin: 0; font-weight: 500; font-size: clamp(1.1rem, 1.45vw, 1.35rem); line-height: 1.12; letter-spacing: -.025em; text-wrap: balance; }
   .lead { margin: 12px 0 0; color: var(--ink-2); font-size: 13px; line-height: 18px; }
 
-  .meta { margin-top: 12px; font-size: 13px; line-height: 18px; color: var(--ink-2); }
+  /* margin целиком, а не только -top: иначе у <p> остаётся браузерный
+     нижний отступ и под блоком копится лишнее место */
+  .meta { margin: 12px 0 0; font-size: 13px; line-height: 18px; color: var(--ink-2); }
+  .meta a { text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
+  .meta a:hover { color: var(--ink); }
 
   /* скриншот пульта — на всю ширину плашки */
   .shot { display: block; width: 100%; height: auto; margin-top: 16px; border: 1px solid var(--line); border-radius: 8px; }
@@ -184,7 +188,7 @@
         <h1>Находи дизайн-вакансии по своим запросам в одном месте</h1>
         <p class="lead">Локальный агент, который ищет тебе работу — сам, каждые 6 часов, пока ты занят делом.</p>
         <img class="shot" src="screenshot.png" alt="Пульт sasaki: слева фильтры по уровню, направлению и формату, справа лента найденных вакансий с трекером откликов" loading="lazy" />
-        <p class="meta">Node.js 21+ &nbsp;·&nbsp; MIT &nbsp;·&nbsp; by 10byrs</p>
+        <p class="meta">Node.js 21+ &nbsp;·&nbsp; MIT &nbsp;·&nbsp; by <a href="https://10byrs.com" target="_blank" rel="noopener">10byrs</a></p>
       </div>
     </section>
 
