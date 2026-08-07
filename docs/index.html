@@ -111,7 +111,8 @@
   .plate.active .body { opacity: 1; }
 
   /* ── контент узкой колонкой ────────────────────────── */
-  h1 { margin: 0; font-weight: 500; font-size: clamp(1.1rem, 1.45vw, 1.35rem); line-height: 1.12; letter-spacing: -.025em; }
+  /* переносы отдаём браузеру: жёсткие <br> в узкой колонке рвали строку не там */
+  h1 { margin: 0; font-weight: 500; font-size: clamp(1.1rem, 1.45vw, 1.35rem); line-height: 1.12; letter-spacing: -.025em; text-wrap: balance; }
   .lead { margin: 12px 0 0; color: var(--ink-2); font-size: 14px; line-height: 1.45; }
 
   .meta { margin-top: 12px; font-size: 11.5px; color: var(--ink-3); line-height: 1.5; }
@@ -180,7 +181,7 @@
         <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
       </button>
       <div class="body" id="b1">
-        <h1>Собирает вакансии.<br>Отсеивает лишнее.<br>Ведёт твои отклики.</h1>
+        <h1>Находи дизайн-вакансии по своим запросам в одном месте</h1>
         <p class="lead">Локальный агент, который ищет тебе работу — сам, каждые 6 часов, пока ты занят делом.</p>
         <p class="meta">Node.js 21+ · zero-dependency · MIT · by 10byrs</p>
         <img class="shot" src="screenshot.png" alt="Пульт sasaki: слева фильтры по уровню, направлению и формату, справа лента найденных вакансий с трекером откликов" loading="lazy" />
