@@ -23,7 +23,9 @@
     --ink-3:   #8e8e86;
     --line:    #e6e6e0;
     --accent:  #14140f;          /* без цветного акцента — монохром */
-    --accent-wash: #f1f1ed;
+    /* подложка иконок — не сплошная, а чёрный с прозрачностью:
+       так она подхватывает то, что под плашкой */
+    --tint: rgba(20, 20, 15, .07);
     --plate:   rgba(255,255,255,.60);
     --plate-on: rgba(255,255,255,.90);
     --gap: 4px;
@@ -139,7 +141,7 @@
   /* как работает — простой список без плашек, тайтл справа от иконки */
   .item + .item { margin-top: 18px; }
   .ihead { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-  .ihead .ic { flex: none; width: 22px; height: 22px; border-radius: 6px; background: var(--accent-wash); display: grid; place-items: center; }
+  .ihead .ic { flex: none; width: 22px; height: 22px; border-radius: 6px; background: var(--tint); display: grid; place-items: center; }
   .ihead .ic svg { width: 13px; height: 13px; stroke: var(--ink); fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
   /* тот же стиль, что у подписей плашек */
   .ihead h3 { margin: 0; font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: -.01em; }
