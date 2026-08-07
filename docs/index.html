@@ -85,6 +85,8 @@
   .head .ico svg { width: 100%; height: 100%; }
   .plate.active .head .ico { transform: rotate(45deg); color: var(--ink); }
   .plate.link .head .ico { transform: none; position: relative; }
+  /* ховер по github-плашке — фирменный оранжевый Git, текст и иконка белым */
+  .plate.link:hover { background: #f05033; border-color: #f05033; color: #fff; }
   /* Ховер по github-плашке: лого уезжает вверх-вправо и гаснет, на его место
      снизу-слева приходит стрелка «наружу». Обе иконки лежат стопкой. */
   .ico-swap svg {
@@ -110,6 +112,9 @@
   .lead { margin: 12px 0 0; color: var(--ink-2); font-size: 14px; line-height: 1.45; }
 
   .cmd { margin-top: 16px; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .body > .cmd:first-child { margin-top: 0; }
+  .cmd + .item { margin-top: 18px; }
+  .item .term { margin-top: 8px; }
   .cmd code { display: block; font-family: "Space Mono", monospace; font-size: 11.5px; line-height: 1.6; word-break: break-all; color: var(--ink); }
   .cmd code .pr { color: var(--accent); }
   .copy {
@@ -124,10 +129,6 @@
   .shot { display: block; width: 100%; height: auto; margin-top: 16px; border: 1px solid var(--line); border-radius: 8px; }
 
   /* установка */
-  .box { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 13px; }
-  .box + .box { margin-top: 10px; }
-  .box h3 { margin: 0 0 3px; font-size: 13.5px; font-weight: 600; }
-  .box p { margin: 0 0 9px; font-size: 12.5px; color: var(--ink-2); line-height: 1.45; }
   .term { background: #16160f; border-radius: 7px; padding: 10px 11px; font-family: "Space Mono", monospace; font-size: 11px; line-height: 1.75; color: #eceae0; white-space: pre-wrap; word-break: break-all; }
   .term .pr { color: #8f887a; user-select: none; }
   .term .cm { color: #86847a; display: block; margin-bottom: 5px; }
@@ -175,10 +176,6 @@
       <div class="body" id="b1">
         <h1>Собирает вакансии.<br>Отсеивает лишнее.<br>Ведёт твои отклики.</h1>
         <p class="lead">Локальный агент, который ищет тебе работу — сам, каждые 6 часов, пока ты занят делом.</p>
-        <div class="cmd">
-          <code><span class="pr">$ </span>git clone …/sasaki-agent &amp;&amp; npm run setup</code>
-          <button class="copy" id="copy"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Копировать</span></button>
-        </div>
         <p class="meta">Node.js 21+ · zero-dependency · MIT · by 10byrs</p>
         <img class="shot" src="screenshot.png" alt="Пульт sasaki: слева фильтры по уровню, направлению и формату, справа лента найденных вакансий с трекером откликов" loading="lazy" />
       </div>
@@ -191,16 +188,26 @@
         <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
       </button>
       <div class="body" id="b2">
-        <div class="box">
-          <h3>Руками</h3>
+        <div class="cmd">
+          <code><span class="pr">$ </span>git clone …/sasaki-agent &amp;&amp; npm run setup</code>
+          <button class="copy" id="copy"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Копировать</span></button>
+        </div>
+        <div class="item">
+          <div class="ihead">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="m5 17 6-5-6-5M13 19h6"/></svg></span>
+            <h3>Руками</h3>
+          </div>
           <p>Три команды в терминале:</p>
           <div class="term"><span class="pr">$ </span>git clone https://github.com/peachcardinal/sasaki-agent.git
 <span class="pr">$ </span>cd sasaki-agent
 <span class="pr">$ </span>npm run setup</div>
           <p class="req">Нужен только <code>Node.js 21+</code> — проверить: <code>node -v</code></p>
         </div>
-        <div class="box">
-          <h3>Или попроси агента</h3>
+        <div class="item">
+          <div class="ihead">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.8 2.8M14.9 14.9l2.8 2.8M17.7 6.3l-2.8 2.8M9.1 14.9l-2.8 2.8"/></svg></span>
+            <h3>Или попроси агента</h3>
+          </div>
           <p>Есть Claude Code или другой кодовый агент? Скажи ему в пустой папке:</p>
           <div class="term"><span class="cm">// вставь как есть</span>Установи мне агента из github.com/peachcardinal/sasaki-agent — склонируй, запусти установку и расскажи, как пользоваться</div>
           <p class="req">Установка неинтерактивная — агент не застрянет на вопросах.</p>
@@ -234,14 +241,14 @@
         <div class="item">
           <div class="ihead">
             <span class="ic"><svg viewBox="0 0 24 24"><path d="M4 7V5h16v2M12 5v14M9 19h6"/></svg></span>
-            <h3>Ключевые и стоп-слова</h3>
+            <h3>Понимает ключевые и стоп-слова</h3>
           </div>
           <p>Если фильтра по направлению мало — задаёшь свои ключевые фразы и стоп-слова. Стоп-слово убирает вакансию из ленты при любом упоминании: так отсекается чужая тематика и нежелательные грейды.</p>
         </div>
         <div class="item">
           <div class="ihead">
             <span class="ic"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span>
-            <h3>Ведёт твои отклики</h3>
+            <h3>Хранит твои отклики</h3>
           </div>
           <p>Воронка Новый → Отклик → Собес → Тестовое → Оффер, рядом — сопроводительное письмо. Всё на твоём компьютере.</p>
         </div>
