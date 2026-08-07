@@ -114,29 +114,30 @@
   h1 { margin: 0; font-weight: 500; font-size: clamp(1.1rem, 1.45vw, 1.35rem); line-height: 1.12; letter-spacing: -.025em; }
   .lead { margin: 12px 0 0; color: var(--ink-2); font-size: 14px; line-height: 1.45; }
 
-  .cmd { margin-top: 16px; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
-  .body > .cmd:first-child { margin-top: 0; }
-  .cmd + .item { margin-top: 18px; }
-  .item .term { margin-top: 8px; }
-  .cmd code { display: block; font-family: "Space Mono", monospace; font-size: 11.5px; line-height: 1.6; word-break: break-all; color: var(--ink); }
-  .cmd code .pr { color: var(--accent); }
-  .copy {
-    margin-top: 9px; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    border: 0; cursor: pointer; background: var(--ink); color: #fff; font: inherit; font-weight: 600; font-size: 12.5px;
-    padding: 8px 12px; border-radius: 7px; transition: background .16s;
-  }
-  .copy:hover, .copy.done { background: #3d3d35; }
   .meta { margin-top: 12px; font-size: 11.5px; color: var(--ink-3); line-height: 1.5; }
 
   /* скриншот пульта — на всю ширину плашки */
   .shot { display: block; width: 100%; height: auto; margin-top: 16px; border: 1px solid var(--line); border-radius: 8px; }
 
-  /* установка */
-  .term { background: #16160f; border-radius: 7px; padding: 10px 11px; font-family: "Space Mono", monospace; font-size: 11px; line-height: 1.75; color: #eceae0; white-space: pre-wrap; word-break: break-all; }
-  .term .pr { color: #8f887a; user-select: none; }
-  .term .cm { color: #86847a; display: block; margin-bottom: 5px; }
-  .req { margin: 9px 0 0; font-size: 11.5px; color: var(--ink-3); line-height: 1.45; }
-  .req code { font-family: "Space Mono", monospace; background: #f5f5f2; padding: 1px 4px; border-radius: 4px; font-size: 11px; }
+  /* установка — все блоки кода выглядят одинаково, у каждого своя кнопка копирования */
+  .code {
+    position: relative; margin-top: 8px;
+    background: #16160f; border-radius: 7px; padding: 10px 36px 10px 11px;
+    font-family: "Space Mono", monospace; font-size: 11px; line-height: 1.75;
+    color: #eceae0; white-space: pre-wrap; word-break: break-all;
+  }
+  .code .pr { color: #8f887a; user-select: none; }
+  .code .cm { color: #86847a; display: block; margin-bottom: 5px; }
+  .cbtn {
+    position: absolute; top: 7px; right: 7px; width: 22px; height: 22px;
+    display: grid; place-items: center; border: 0; border-radius: 5px; cursor: pointer;
+    background: rgba(255,255,255,.1); color: #eceae0; transition: background .16s;
+  }
+  .cbtn:hover, .cbtn.done { background: rgba(255,255,255,.24); }
+  .cbtn svg { width: 12px; height: 12px; }
+  /* .item p обнуляет margin, поэтому селектор должен быть не слабее */
+  .item .req { margin: 8px 0 0; font-size: 11.5px; color: var(--ink-3); line-height: 1.45; }
+  .req code { font-family: "Space Mono", monospace; background: var(--tint); padding: 1px 4px; border-radius: 4px; font-size: 11px; }
 
   /* как работает — простой список без плашек, тайтл справа от иконки */
   .item + .item { margin-top: 18px; }
@@ -191,20 +192,24 @@
         <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
       </button>
       <div class="body" id="b2">
-        <div class="cmd">
-          <code><span class="pr">$ </span>git clone …/sasaki-agent &amp;&amp; npm run setup</code>
-          <button class="copy" id="copy"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Копировать</span></button>
+        <div class="item">
+          <div class="ihead">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg></span>
+            <h3>Одной строкой</h3>
+          </div>
+          <p>Самый быстрый путь: скопируй и вставь в терминал. Склонирует проект, поставит автозапуск и откроет пульт.</p>
+          <div class="code"><button class="cbtn" data-copy="git clone https://github.com/peachcardinal/sasaki-agent.git &amp;&amp; cd sasaki-agent &amp;&amp; npm run setup" aria-label="Скопировать команду"></button><span class="pr">$ </span>git clone …/sasaki-agent &amp;&amp; npm run setup</div>
+          <p class="req">Нужен только <code>Node.js 21+</code> — проверить: <code>node -v</code></p>
         </div>
         <div class="item">
           <div class="ihead">
             <span class="ic"><svg viewBox="0 0 24 24"><path d="m5 17 6-5-6-5M13 19h6"/></svg></span>
-            <h3>Руками</h3>
+            <h3>По шагам</h3>
           </div>
-          <p>Три команды в терминале:</p>
-          <div class="term"><span class="pr">$ </span>git clone https://github.com/peachcardinal/sasaki-agent.git
+          <p>То же самое тремя командами, если хочется видеть каждый шаг:</p>
+          <div class="code"><button class="cbtn" data-copy="git clone https://github.com/peachcardinal/sasaki-agent.git&#10;cd sasaki-agent&#10;npm run setup" aria-label="Скопировать команды"></button><span class="pr">$ </span>git clone https://github.com/peachcardinal/sasaki-agent.git
 <span class="pr">$ </span>cd sasaki-agent
 <span class="pr">$ </span>npm run setup</div>
-          <p class="req">Нужен только <code>Node.js 21+</code> — проверить: <code>node -v</code></p>
         </div>
         <div class="item">
           <div class="ihead">
@@ -212,7 +217,7 @@
             <h3>Или попроси агента</h3>
           </div>
           <p>Есть Claude Code или другой кодовый агент? Скажи ему в пустой папке:</p>
-          <div class="term"><span class="cm">// вставь как есть</span>Установи мне агента из github.com/peachcardinal/sasaki-agent — склонируй, запусти установку и расскажи, как пользоваться</div>
+          <div class="code"><button class="cbtn" data-copy="Установи мне агента из github.com/peachcardinal/sasaki-agent — склонируй, запусти установку и расскажи, как пользоваться" aria-label="Скопировать запрос"></button><span class="cm">// вставь как есть</span>Установи мне агента из github.com/peachcardinal/sasaki-agent — склонируй, запусти установку и расскажи, как пользоваться</div>
           <p class="req">Установка неинтерактивная — агент не застрянет на вопросах.</p>
         </div>
       </div>
@@ -291,28 +296,32 @@
     });
   })();
 
-  // копирование команды
+  // копирование: одна логика на все блоки кода, текст берётся из data-copy
   (function () {
-    var btn = document.getElementById("copy");
-    var full = "git clone https://github.com/peachcardinal/sasaki-agent.git && cd sasaki-agent && npm run setup";
-    var icon = btn.innerHTML;
-    function feedback() {
-      btn.classList.add("done");
-      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Скопировано</span>';
-      setTimeout(function () { btn.classList.remove("done"); btn.innerHTML = icon; }, 1800);
-    }
-    function legacy() {
+    var COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    var DONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+
+    function legacy(text) {
       var ta = document.createElement("textarea");
-      ta.value = full; ta.style.position = "fixed"; ta.style.opacity = "0";
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
       document.body.appendChild(ta); ta.select();
       try { document.execCommand("copy"); } catch (e) {}
       document.body.removeChild(ta);
     }
-    btn.addEventListener("click", function (e) {
-      e.stopPropagation();
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(full).then(feedback, function () { legacy(); feedback(); });
-      } else { legacy(); feedback(); }
+
+    [].slice.call(document.querySelectorAll(".cbtn")).forEach(function (btn) {
+      btn.innerHTML = COPY;
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var text = btn.dataset.copy;
+        function done() {
+          btn.classList.add("done"); btn.innerHTML = DONE;
+          setTimeout(function () { btn.classList.remove("done"); btn.innerHTML = COPY; }, 1600);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done, function () { legacy(text); done(); });
+        } else { legacy(text); done(); }
+      });
     });
   })();
 </script>
