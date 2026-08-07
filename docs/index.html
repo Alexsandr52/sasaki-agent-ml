@@ -81,9 +81,9 @@
   .head .ttl { font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* первая плашка — имя проекта: капсом и жирным */
   .plate.brand .ttl { text-transform: uppercase; font-weight: 700; letter-spacing: .04em; }
-  .head .ico { flex: none; display: grid; place-items: center; width: 18px; height: 18px; color: var(--ink-2); transition: transform .42s cubic-bezier(.22,.9,.2,1), color .25s; }
+  .head .ico { flex: none; display: grid; place-items: center; width: 18px; height: 18px; color: var(--ink); transition: transform .42s cubic-bezier(.22,.9,.2,1); }
   .head .ico svg { width: 100%; height: 100%; }
-  .plate.active .head .ico { transform: rotate(45deg); color: var(--ink); }
+  .plate.active .head .ico { transform: rotate(45deg); }
   .plate.link .head .ico { transform: none; position: relative; }
   /* ховер по github-плашке: та же полупрозрачная подложка с блюром, что у
      остальных, только белый заменён на оранжевый — видео продолжает просвечивать */
