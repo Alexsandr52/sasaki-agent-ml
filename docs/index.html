@@ -118,8 +118,8 @@
   /* margin целиком, а не только -top: иначе у <p> остаётся браузерный
      нижний отступ и под блоком копится лишнее место */
   .meta { margin: 12px 0 0; font-size: 13px; line-height: 18px; color: var(--ink-2); }
-  .meta a { text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
-  .meta a:hover { color: var(--ink); }
+  .meta a { text-decoration: none; }
+  .meta a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
 
   /* скриншот пульта — на всю ширину плашки */
   .shot { display: block; width: 100%; height: auto; margin-top: 16px; border: 1px solid var(--line); border-radius: 8px; }
@@ -186,9 +186,9 @@
       </button>
       <div class="body" id="b1">
         <h1>Находи дизайн-вакансии по своим запросам в одном месте</h1>
-        <p class="lead">Локальный агент, который ищет тебе работу — сам, каждые 6 часов, пока ты занят делом.</p>
+        <p class="lead">Локальный агент, который ищет тебе работу — сам, каждые 6 часов, пока ты занят делом</p>
         <img class="shot" src="screenshot.png" alt="Пульт sasaki: слева фильтры по уровню, направлению и формату, справа лента найденных вакансий с трекером откликов" loading="lazy" />
-        <p class="meta">Node.js 21+ &nbsp;·&nbsp; MIT &nbsp;·&nbsp; by <a href="https://10byrs.com" target="_blank" rel="noopener">10byrs</a></p>
+        <p class="meta">Node.js 21+ &nbsp;·&nbsp; MIT &nbsp;·&nbsp; <a href="https://10byrs.com" target="_blank" rel="noopener">by 10byrs</a></p>
       </div>
     </section>
 
@@ -285,6 +285,47 @@
 </div>
 
 <script>
+  // Щелчок по клику. Аудиофайла не держим — звук синтезируется Web Audio:
+  // ничего не качается, страница остаётся самодостаточной.
+  var click = (function () {
+    var ctx = null;
+    return function () {
+      try {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        if (!ctx) ctx = new AC();
+        if (ctx.state === "suspended") ctx.resume();
+        var t = ctx.currentTime;
+
+        // шумовой транзиент — сама «щёлкающая» атака
+        var len = Math.floor(ctx.sampleRate * 0.03);
+        var buf = ctx.createBuffer(1, len, ctx.sampleRate);
+        var d = buf.getChannelData(0);
+        for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 8);
+        var noise = ctx.createBufferSource(); noise.buffer = buf;
+        var bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2200; bp.Q.value = 1.2;
+        var ng = ctx.createGain(); ng.gain.value = 0.08;
+        noise.connect(bp); bp.connect(ng); ng.connect(ctx.destination);
+        noise.start(t);
+
+        // короткий тон вниз — «тело» щелчка, чтобы не звучало как шипение
+        var osc = ctx.createOscillator(); osc.type = "triangle";
+        osc.frequency.setValueAtTime(620, t);
+        osc.frequency.exponentialRampToValueAtTime(320, t + 0.05);
+        var og = ctx.createGain();
+        og.gain.setValueAtTime(0.0001, t);
+        og.gain.exponentialRampToValueAtTime(0.06, t + 0.005);
+        og.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+        osc.connect(og); og.connect(ctx.destination);
+        osc.start(t); osc.stop(t + 0.1);
+      } catch (e) { /* нет Web Audio — просто без звука */ }
+    };
+  })();
+
+  document.addEventListener("click", function (e) {
+    if (e.target.closest(".head, .cbtn, .plate.link")) click();
+  });
+
   // аккордеон: открыта ровно одна плашка, повторный клик закрывает
   (function () {
     var plates = [].slice.call(document.querySelectorAll(".plate:not(.link)"));
