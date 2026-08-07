@@ -22,8 +22,8 @@
     --ink-2:   #5c5c55;
     --ink-3:   #8e8e86;
     --line:    #e6e6e0;
-    --accent:  #1f7a48;
-    --accent-wash: #e9f3ec;
+    --accent:  #14140f;          /* без цветного акцента — монохром */
+    --accent-wash: #f1f1ed;
     --plate:   rgba(255,255,255,.60);
     --plate-on: rgba(255,255,255,.90);
     --gap: 4px;
@@ -105,8 +105,7 @@
   .plate.active .body { opacity: 1; }
 
   /* ── контент узкой колонкой ────────────────────────── */
-  h1 { margin: 0; font-weight: 500; font-size: clamp(1.35rem, 1.9vw, 1.75rem); line-height: 1.08; letter-spacing: -.03em; }
-  h1 .g { color: var(--accent); }
+  h1 { margin: 0; font-weight: 500; font-size: clamp(1.1rem, 1.45vw, 1.35rem); line-height: 1.12; letter-spacing: -.025em; }
   .lead { margin: 12px 0 0; color: var(--ink-2); font-size: 14px; line-height: 1.45; }
 
   .cmd { margin-top: 16px; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
@@ -117,24 +116,11 @@
     border: 0; cursor: pointer; background: var(--ink); color: #fff; font: inherit; font-weight: 600; font-size: 12.5px;
     padding: 8px 12px; border-radius: 7px; transition: background .16s;
   }
-  .copy:hover, .copy.done { background: var(--accent); }
+  .copy:hover, .copy.done { background: #3d3d35; }
   .meta { margin-top: 12px; font-size: 11.5px; color: var(--ink-3); line-height: 1.5; }
 
-  /* живая лента */
-  .feed-h { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--ink-3); margin: 16px 0 8px; padding-top: 12px; border-top: 1px solid var(--line); }
-  .feed { height: 190px; overflow: hidden; -webkit-mask-image: linear-gradient(180deg, transparent, #000 12%, #000 84%, transparent); mask-image: linear-gradient(180deg, transparent, #000 12%, #000 84%, transparent); }
-  .track { display: flex; flex-direction: column; gap: 6px; animation: stream 32s linear infinite; }
-  .feed:hover .track { animation-play-state: paused; }
-  @keyframes stream { from { transform: translateY(0) } to { transform: translateY(-50%) } }
-  @media (prefers-reduced-motion: reduce) { .track { animation: none } }
-  .vac { background: #fff; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; }
-  .vac .t { font-weight: 600; font-size: 12.5px; line-height: 1.25; }
-  .vac .b { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
-  .vac .s { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .vac .r { display: flex; align-items: center; gap: 7px; flex: none; }
-  .fmt { font-size: 10px; color: var(--ink-2); background: #f5f5f2; border-radius: 5px; padding: 2px 6px; white-space: nowrap; }
-  .fmt.rem { color: var(--accent); background: var(--accent-wash); }
-  .src i { width: 15px; height: 15px; border-radius: 4px; display: grid; place-items: center; color: #fff; font-size: 7.5px; font-weight: 700; font-style: normal; }
+  /* скриншот пульта — на всю ширину плашки */
+  .shot { display: block; width: 100%; height: auto; margin-top: 16px; border: 1px solid var(--line); border-radius: 8px; }
 
   /* установка */
   .box { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 13px; }
@@ -142,7 +128,7 @@
   .box h3 { margin: 0 0 3px; font-size: 13.5px; font-weight: 600; }
   .box p { margin: 0 0 9px; font-size: 12.5px; color: var(--ink-2); line-height: 1.45; }
   .term { background: #16160f; border-radius: 7px; padding: 10px 11px; font-family: "Space Mono", monospace; font-size: 11px; line-height: 1.75; color: #eceae0; white-space: pre-wrap; word-break: break-all; }
-  .term .pr { color: #7fcf9c; user-select: none; }
+  .term .pr { color: #8f887a; user-select: none; }
   .term .cm { color: #86847a; display: block; margin-bottom: 5px; }
   .req { margin: 9px 0 0; font-size: 11.5px; color: var(--ink-3); line-height: 1.45; }
   .req code { font-family: "Space Mono", monospace; background: #f5f5f2; padding: 1px 4px; border-radius: 4px; font-size: 11px; }
@@ -189,15 +175,14 @@
         <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
       </button>
       <div class="body" id="b1">
-        <h1>Собирает вакансии.<br>Отсеивает лишнее.<br>Ведёт твои <span class="g">отклики</span>.</h1>
+        <h1>Собирает вакансии.<br>Отсеивает лишнее.<br>Ведёт твои отклики.</h1>
         <p class="lead">Локальный агент, который ищет тебе работу — сам, каждые 6 часов, пока ты занят делом.</p>
         <div class="cmd">
           <code><span class="pr">$ </span>git clone …/sasaki-agent &amp;&amp; npm run setup</code>
           <button class="copy" id="copy"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Копировать</span></button>
         </div>
         <p class="meta">Node.js 21+ · zero-dependency · MIT · by 10byrs</p>
-        <div class="feed-h"><span>Лента находок</span><span class="mono">127.0.0.1:4321</span></div>
-        <div class="feed"><div class="track" id="track"></div></div>
+        <img class="shot" src="screenshot.png" alt="Пульт sasaki: слева фильтры по уровню, направлению и формату, справа лента найденных вакансий с трекером откликов" loading="lazy" />
       </div>
     </section>
 
@@ -316,38 +301,6 @@
         navigator.clipboard.writeText(full).then(feedback, function () { legacy(); feedback(); });
       } else { legacy(); feedback(); }
     });
-  })();
-
-  // живая лента находок
-  (function () {
-    var S = {
-      hh:["hh","#d6001c"], gm:["gm","#0ea5a5"], ya:["Я","#fc3f1d"], vk:["VK","#0077ff"],
-      av:["A","#00a0e9"], gis:["2","#19aa1e"], alfa:["А","#ef3124"], x5:["X5","#e11a2c"],
-      tb:["Т","#111"], mts:["М","#e30611"]
-    };
-    var data = [
-      ["Продуктовый дизайнер","Туту · senior","удалённо",1,"hh"],
-      ["Design Team Lead (Web, TV & Auto)","Звук · lead","гибрид",0,"gm"],
-      ["Senior Product Designer","Яндекс · senior","удалённо",1,"ya"],
-      ["Ведущий дизайнер продукта","VK · lead","гибрид",0,"vk"],
-      ["UX/UI-дизайнер","Авито · middle","офис",0,"av"],
-      ["Продуктовый дизайнер","Т-Банк · senior","удалённо",1,"tb"],
-      ["Дизайн-директор продукта","2ГИС · head","удалённо",1,"gis"],
-      ["Продуктовый дизайнер (Senior)","getmatch agency · senior","гибрид",0,"gm"],
-      ["Ведущий дизайнер интерфейсов","Альфа-Банк · lead","гибрид",0,"alfa"],
-      ["Product Designer","X5 Tech · senior","удалённо",1,"x5"],
-      ["Продуктовый дизайнер","МТС · middle","гибрид",0,"mts"],
-      ["Дизайнер продукта в дизайн-систему","Т-Банк · senior","удалённо",1,"tb"]
-    ];
-    function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
-    var html = data.map(function (v) {
-      var s = S[v[4]];
-      return '<div class="vac"><div class="t">'+esc(v[0])+'</div><div class="b">' +
-        '<span class="s">'+esc(v[1])+'</span>' +
-        '<span class="r"><span class="fmt'+(v[3]?' rem':'')+'">'+v[2]+'</span>' +
-        '<span class="src"><i style="background:'+s[1]+'">'+s[0]+'</i></span></span></div></div>';
-    }).join("");
-    document.getElementById("track").innerHTML = html + html;
   })();
 </script>
 </body>
