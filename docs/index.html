@@ -106,9 +106,16 @@
   .body {
     /* по бокам и снизу — как у шапки, сверху вдвое больше */
     flex: 1; min-height: 0; overflow: auto; padding: 20px 10px 10px;
-    opacity: 0; transition: opacity .3s ease .1s;
+    /* visibility, а не только opacity: иначе ссылки и кнопки внутри свёрнутой
+       плашки остаются в порядке табуляции, и с клавиатуры можно попасть на то,
+       чего не видно. Скрываем после того, как отработало затухание. */
+    opacity: 0; visibility: hidden;
+    transition: opacity .3s ease .1s, visibility 0s linear .4s;
   }
-  .plate.active .body { opacity: 1; }
+  .plate.active .body {
+    opacity: 1; visibility: visible;
+    transition: opacity .3s ease .1s, visibility 0s;
+  }
 
   /* ── контент узкой колонкой ────────────────────────── */
   /* переносы отдаём браузеру: жёсткие <br> в узкой колонке рвали строку не там */
