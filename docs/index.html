@@ -133,17 +133,15 @@
   .req { margin: 9px 0 0; font-size: 11.5px; color: var(--ink-3); line-height: 1.45; }
   .req code { font-family: "Space Mono", monospace; background: #f5f5f2; padding: 1px 4px; border-radius: 4px; font-size: 11px; }
 
-  /* как работает */
-  .card { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 13px; }
-  .card + .card { margin-top: 10px; }
-  .card .ic { width: 26px; height: 26px; border-radius: 7px; background: var(--accent-wash); display: grid; place-items: center; margin-bottom: 8px; }
-  .card .ic svg { width: 14px; height: 14px; stroke: var(--accent); fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-  .card h3 { margin: 0 0 4px; font-size: 13.5px; font-weight: 600; }
-  .card p { margin: 0; font-size: 12px; color: var(--ink-2); line-height: 1.45; }
-  .srcs { margin-top: 13px; padding-top: 12px; border-top: 1px solid var(--line); }
-  .srcs .k { font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
-  .srcs .names { margin-top: 7px; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; font-weight: 500; }
-  .srcs .names .more { color: var(--accent); }
+  /* как работает — простой список без плашек, тайтл справа от иконки */
+  .item + .item { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .ihead { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .ihead .ic { flex: none; width: 22px; height: 22px; border-radius: 6px; background: var(--accent-wash); display: grid; place-items: center; }
+  .ihead .ic svg { width: 13px; height: 13px; stroke: var(--ink); fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .ihead h3 { margin: 0; font-size: 13.5px; font-weight: 600; letter-spacing: -.01em; }
+  .item p { margin: 0; font-size: 12px; color: var(--ink-2); line-height: 1.45; }
+  .names { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; font-weight: 500; }
+  .names .more { color: var(--ink-3); }
 
   /* ── адаптив ───────────────────────────────────────── */
   /* Узкий экран: в ряд четыре подписи не влезают, а при переносе в 2×2
@@ -217,23 +215,12 @@
         <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
       </button>
       <div class="body" id="b3">
-        <div class="card">
-          <div class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
-          <h3>Обходит источники сам</h3>
-          <p>19 источников из коробки — hh, LinkedIn, getmatch, Хабр Карьера, карьерные сайты компаний и телеграм-каналы. Раз в 6 часов, в фоне.</p>
-        </div>
-        <div class="card">
-          <div class="ic"><svg viewBox="0 0 24 24"><path d="M3 5h18M6 12h12M10 19h4"/></svg></div>
-          <h3>Отбирает по критериям</h3>
-          <p>Направление, уровень, формат работы. Дубли между источниками отсеивает, показанное не повторяет.</p>
-        </div>
-        <div class="card">
-          <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></div>
-          <h3>Ведёт твои отклики</h3>
-          <p>Воронка Новый → Отклик → Собес → Тестовое → Оффер, рядом — сопроводительное письмо. Всё на твоём компьютере.</p>
-        </div>
-        <div class="srcs">
-          <div class="k">19 источников · один поток</div>
+        <div class="item">
+          <div class="ihead">
+            <span class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+            <h3>Обходит источники сам</h3>
+          </div>
+          <p>Раз в 6 часов, в фоне. 19 источников из коробки:</p>
           <div class="names">
             <span>hh.ru</span><span>LinkedIn</span><span>getmatch</span><span>Хабр Карьера</span>
             <span>designer.ru</span><span>hirehi</span><span>finder</span><span>Telegram</span>
@@ -241,6 +228,27 @@
             <span>МТС</span><span>Магнит</span><span>Wildberries</span><span>Точка</span>
             <span>Альфа-Банк</span><span>2ГИС</span><span class="more">+ свой сайт</span>
           </div>
+        </div>
+        <div class="item">
+          <div class="ihead">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M3 5h18M6 12h12M10 19h4"/></svg></span>
+            <h3>Отбирает по критериям</h3>
+          </div>
+          <p>Направление, уровень, формат работы. Дубли между источниками отсеивает, показанное не повторяет.</p>
+        </div>
+        <div class="item">
+          <div class="ihead">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M4 7V5h16v2M12 5v14M9 19h6"/></svg></span>
+            <h3>Ключевые и стоп-слова</h3>
+          </div>
+          <p>Если фильтра по направлению мало — задаёшь свои ключевые фразы и стоп-слова. Стоп-слово убирает вакансию из ленты при любом упоминании: так отсекается чужая тематика и нежелательные грейды.</p>
+        </div>
+        <div class="item">
+          <div class="ihead">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span>
+            <h3>Ведёт твои отклики</h3>
+          </div>
+          <p>Воронка Новый → Отклик → Собес → Тестовое → Оффер, рядом — сопроводительное письмо. Всё на твоём компьютере.</p>
         </div>
       </div>
     </section>
