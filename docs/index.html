@@ -78,7 +78,7 @@
     padding: 0 10px; background: none; border: 0; cursor: pointer;
     font: inherit; color: inherit; text-align: left;
   }
-  .head .ttl { font-size: 13px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .head .ttl { font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* первая плашка — имя проекта: капсом и жирным */
   .plate.brand .ttl { text-transform: uppercase; font-weight: 700; letter-spacing: .04em; }
   .head .ico { flex: none; display: grid; place-items: center; width: 18px; height: 18px; color: var(--ink-2); transition: transform .42s cubic-bezier(.22,.9,.2,1), color .25s; }
@@ -99,7 +99,8 @@
   }
 
   .body {
-    flex: 1; min-height: 0; overflow: auto; padding: 0 10px 14px;   /* по бокам — как у шапки */
+    /* по бокам и снизу — как у шапки, сверху вдвое больше */
+    flex: 1; min-height: 0; overflow: auto; padding: 20px 10px 10px;
     opacity: 0; transition: opacity .3s ease .1s;
   }
   .plate.active .body { opacity: 1; }
@@ -134,14 +135,13 @@
   .req code { font-family: "Space Mono", monospace; background: #f5f5f2; padding: 1px 4px; border-radius: 4px; font-size: 11px; }
 
   /* как работает — простой список без плашек, тайтл справа от иконки */
-  .item + .item { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .item + .item { margin-top: 18px; }
   .ihead { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
   .ihead .ic { flex: none; width: 22px; height: 22px; border-radius: 6px; background: var(--accent-wash); display: grid; place-items: center; }
   .ihead .ic svg { width: 13px; height: 13px; stroke: var(--ink); fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-  .ihead h3 { margin: 0; font-size: 13.5px; font-weight: 600; letter-spacing: -.01em; }
+  /* тот же стиль, что у подписей плашек */
+  .ihead h3 { margin: 0; font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: -.01em; }
   .item p { margin: 0; font-size: 12px; color: var(--ink-2); line-height: 1.45; }
-  .names { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; font-weight: 500; }
-  .names .more { color: var(--ink-3); }
 
   /* ── адаптив ───────────────────────────────────────── */
   /* Узкий экран: в ряд четыре подписи не влезают, а при переносе в 2×2
@@ -220,14 +220,9 @@
             <span class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
             <h3>Обходит источники сам</h3>
           </div>
-          <p>Раз в 6 часов, в фоне. 19 источников из коробки:</p>
-          <div class="names">
-            <span>hh.ru</span><span>LinkedIn</span><span>getmatch</span><span>Хабр Карьера</span>
-            <span>designer.ru</span><span>hirehi</span><span>finder</span><span>Telegram</span>
-            <span>Яндекс</span><span>VK</span><span>Т-Банк</span><span>Авито</span><span>X5</span>
-            <span>МТС</span><span>Магнит</span><span>Wildberries</span><span>Точка</span>
-            <span>Альфа-Банк</span><span>2ГИС</span><span class="more">+ свой сайт</span>
-          </div>
+          <p>Раз в 6 часов, в фоне. 19 источников из коробки: hh.ru, LinkedIn, getmatch,
+            Хабр Карьера, designer.ru, hirehi, finder, Telegram, Яндекс, VK, Т-Банк, Авито,
+            X5, МТС, Магнит, Wildberries, Точка, Альфа-Банк, 2ГИС и любой другой сайт.</p>
         </div>
         <div class="item">
           <div class="ihead">
