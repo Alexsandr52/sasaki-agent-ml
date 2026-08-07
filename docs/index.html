@@ -122,22 +122,26 @@
   /* установка — все блоки кода выглядят одинаково, у каждого своя кнопка копирования */
   .code {
     position: relative; margin-top: 8px;
-    background: #16160f; border-radius: 7px; padding: 10px 36px 10px 11px;
+    background: rgba(20, 20, 15, .06); border-radius: 7px; padding: 10px 36px 10px 11px;
     font-family: "Space Mono", monospace; font-size: 11px; line-height: 1.75;
-    color: #eceae0; white-space: pre-wrap; word-break: break-all;
+    color: var(--ink);
+    /* pre-wrap держит переводы строк; ломаем только то, что не влезает
+       целиком (длинный URL), а не каждое слово подряд */
+    white-space: pre-wrap; word-break: normal; overflow-wrap: break-word;
   }
-  .code .pr { color: #8f887a; user-select: none; }
-  .code .cm { color: #86847a; display: block; margin-bottom: 5px; }
+  .code .pr { color: var(--ink-3); user-select: none; }
+  .code .cm { color: var(--ink-3); display: block; margin-bottom: 5px; }
   .cbtn {
     position: absolute; top: 7px; right: 7px; width: 22px; height: 22px;
     display: grid; place-items: center; border: 0; border-radius: 5px; cursor: pointer;
-    background: rgba(255,255,255,.1); color: #eceae0; transition: background .16s;
+    background: rgba(20, 20, 15, .07); color: var(--ink-2); transition: background .16s;
   }
-  .cbtn:hover, .cbtn.done { background: rgba(255,255,255,.24); }
+  .cbtn:hover, .cbtn.done { background: rgba(20, 20, 15, .16); }
   .cbtn svg { width: 12px; height: 12px; }
   /* .item p обнуляет margin, поэтому селектор должен быть не слабее */
   .item .req { margin: 8px 0 0; font-size: 11.5px; color: var(--ink-3); line-height: 1.45; }
-  .req code { font-family: "Space Mono", monospace; background: var(--tint); padding: 1px 4px; border-radius: 4px; font-size: 11px; }
+  /* чип не рвём посередине: «node -v» не должен разъезжаться по строкам */
+  .req code { font-family: "Space Mono", monospace; background: var(--tint); padding: 1px 4px; border-radius: 4px; font-size: 11px; white-space: nowrap; }
 
   /* как работает — простой список без плашек, тайтл справа от иконки */
   .item + .item { margin-top: 18px; }
@@ -218,7 +222,7 @@
           </div>
           <p>Есть Claude Code или другой кодовый агент? Скажи ему в пустой папке:</p>
           <div class="code"><button class="cbtn" data-copy="Установи мне агента из github.com/peachcardinal/sasaki-agent — склонируй, запусти установку и расскажи, как пользоваться" aria-label="Скопировать запрос"></button><span class="cm">// вставь как есть</span>Установи мне агента из github.com/peachcardinal/sasaki-agent — склонируй, запусти установку и расскажи, как пользоваться</div>
-          <p class="req">Установка неинтерактивная — агент не застрянет на вопросах.</p>
+          <p class="req">Установка неинтерактивная — агент не застрянет на вопросах</p>
         </div>
       </div>
     </section>
