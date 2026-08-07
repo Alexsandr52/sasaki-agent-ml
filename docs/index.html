@@ -304,7 +304,7 @@
         for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 8);
         var noise = ctx.createBufferSource(); noise.buffer = buf;
         var bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2200; bp.Q.value = 1.2;
-        var ng = ctx.createGain(); ng.gain.value = 0.08;
+        var ng = ctx.createGain(); ng.gain.value = 0.3;   // громкость щелчка
         noise.connect(bp); bp.connect(ng); ng.connect(ctx.destination);
         noise.start(t);
 
@@ -314,7 +314,7 @@
         osc.frequency.exponentialRampToValueAtTime(320, t + 0.05);
         var og = ctx.createGain();
         og.gain.setValueAtTime(0.0001, t);
-        og.gain.exponentialRampToValueAtTime(0.06, t + 0.005);
+        og.gain.exponentialRampToValueAtTime(0.22, t + 0.005);
         og.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
         osc.connect(og); og.connect(ctx.destination);
         osc.start(t); osc.stop(t + 0.1);
@@ -325,6 +325,17 @@
   document.addEventListener("click", function (e) {
     if (e.target.closest(".head, .cbtn, .plate.link")) click();
   });
+
+  // На узком экране при заходе все плашки свёрнуты: раскрытая занимает почти
+  // весь экран и прячет остальные. На десктопе первая открыта, как в разметке.
+  (function () {
+    if (!window.matchMedia || !window.matchMedia("(max-width: 720px)").matches) return;
+    [].slice.call(document.querySelectorAll(".plate.active")).forEach(function (p) {
+      p.classList.remove("active");
+      var h = p.querySelector(".head");
+      if (h) h.setAttribute("aria-expanded", "false");
+    });
+  })();
 
   // аккордеон: открыта ровно одна плашка, повторный клик закрывает
   (function () {
