@@ -85,9 +85,9 @@
   .head .ico svg { width: 100%; height: 100%; }
   .plate.active .head .ico { transform: rotate(45deg); color: var(--ink); }
   .plate.link .head .ico { transform: none; position: relative; }
-  /* ховер по github-плашке — оранжевая заливка. Подпись и иконка остаются
-     тёмными: на этом оранжевом белый даёт контраст ~2:1 и плохо читается. */
-  .plate.link:hover { background: #ff8000; border-color: #ff8000; }
+  /* ховер по github-плашке: та же полупрозрачная подложка с блюром, что у
+     остальных, только белый заменён на оранжевый — видео продолжает просвечивать */
+  .plate.link:hover { background: rgba(255, 128, 0, .78); border-color: rgba(255, 128, 0, .5); }
   /* Ховер по github-плашке: лого уезжает вверх-вправо и гаснет, на его место
      снизу-слева приходит стрелка «наружу». Обе иконки лежат стопкой. */
   .ico-swap svg {
