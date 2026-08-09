@@ -47,8 +47,10 @@
   .mono { font-family: "Space Mono", ui-monospace, monospace; }
 
   /* фон-видео */
-  .bgv { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; background: #a9c1ef; }
-  .bgv-scrim { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(180deg, rgba(240,240,238,.18), rgba(240,240,238,.40)); }
+  /* запасной цвет = доминанта ролика, чтобы до загрузки не мигало другим тоном */
+  .bgv { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; background: #7aa8e0; }
+  /* вуаль еле заметная: кадр и так светлый, а текст лежит на своих плашках */
+  .bgv-scrim { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(180deg, rgba(240,240,238,.06), rgba(240,240,238,.18)); }
 
   /* ── сцена: ряд плашек всегда по центру экрана ──────── */
   .stage {
