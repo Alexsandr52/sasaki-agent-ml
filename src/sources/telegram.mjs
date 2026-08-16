@@ -5,7 +5,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { projectRoot } from "../lib/env.mjs";
-import { matchesKeywords, inferGrades, roleKeywords } from "../lib/filter.mjs";
+import { matchesKeywords, inferGrades, roleKeywords, areasOf, dutiesOf } from "../lib/filter.mjs";
 
 const cursorsPath = join(projectRoot, "data", "tg-cursors.json");
 
@@ -36,7 +36,12 @@ export async function fetchTelegramChannels(cfg) {
         cursors[name] = Math.max(cursors[name] || 0, p.msgId);
         if (!matchesKeywords(p.text, kws)) continue;
         const company = companyFrom(p.text);
+        // область по полному тексту поста — запасной сигнал для направления,
+        // когда заголовок немой («Ведущий дизайнер»). Дайджесты (много ссылок =
+        // список разных вакансий) не размечаем: области взялись бы из чужих строк.
+        const areas = (p.urls?.length || 0) < 3 ? areasOf(dutiesOf(p.text)) : [];
         out.push({
+          ...(areas.length && { areas }),
           source: "telegram",
           id: `${name}:${p.msgId}`,
           title: stripCompanyFromTitle(jobTitle(p.text), company),

@@ -139,7 +139,7 @@ const AREA_WORDS = {
   продукт: "product", product: "product",
   интерфейс: "uxui", ux: "uxui", ui: "uxui", юзабилити: "uxui", usability: "uxui",
   веб: "web", web: "web", сайт: "web", лендинг: "web", landing: "web",
-  график: "graphic", graphic: "graphic", полиграф: "graphic",
+  график: "graphic", графич: "graphic", graphic: "graphic", полиграф: "graphic",
   коммуникацион: "communication", communication: "communication",
   бренд: "identity", brand: "identity", branding: "identity",
   айдентик: "identity", identity: "identity", логотип: "identity", logo: "identity",
@@ -179,6 +179,22 @@ export function roleKeywords(cfg) {
   return [...new Set([...expanded, ...(cfg.keywords || [])])];
 }
 
+// Кусок описания, по которому честно судить об области, — блок обязанностей.
+// Полный текст шумит боилерплейтом о компании: у сети оптики «лучший оптический
+// ПРОДУКТ» давал ложный product, хотя обязанности — чистая графика. Блока нет —
+// возвращаем весь текст (лучше шумный сигнал, чем никакого).
+const DUTIES_START = /(?:обязанност\w*|задач[аи]\w*|что предстоит|чем предстоит заниматься|что делать|you will|responsibilit\w*)\s*:?/i;
+const DUTIES_END = /(?:требован\w*|услови\w*|мы предлагаем|предлагаем|ожидан\w*|будет плюсом|о компании|оформлен\w*|график работы|этапы|requirements|we offer|benefits)\s*:?/i;
+
+export function dutiesOf(text) {
+  const s = String(text || "");
+  const start = s.search(DUTIES_START);
+  if (start < 0) return s;
+  const rest = s.slice(start);
+  const end = rest.slice(20).search(DUTIES_END); // 20 — не споткнуться о сам заголовок
+  return end < 0 ? rest : rest.slice(0, end + 20);
+}
+
 export function areasOf(text) {
   const found = new Set();
   for (const w of normalize(text).split(" ")) {
@@ -200,7 +216,14 @@ function areaOk(item, dirs) {
   const allowed = new Set(dirs.flatMap((d) => DIRECTION_AREAS[normalize(d)] || []));
   if (!allowed.size) return true; // своё (нестандартное) направление — не судим
   const found = areasOf(withoutParens(item.title));
-  if (!found.length) return true;
+  if (!found.length) {
+    // Заголовок области не назвал («Ведущий дизайнер») — смотрим item.areas:
+    // источник мог определить область по полному описанию (finder — детальная
+    // страница, телеграм — текст поста). Так «Ведущий дизайнер» в бренд-команду
+    // режется при направлении «продуктовый», не задевая продуктовых лидов.
+    if (item.areas?.length) return item.areas.some((a) => allowed.has(a));
+    return true; // области нет нигде — не режем
+  }
   if (found.some((a) => allowed.has(a))) return true;
   // но в скобках может стоять и уточнение специализации («Веб-дизайнер (UX/UI)»)
   // — если своя область нашлась хоть где-то в заголовке, не режем
