@@ -26,6 +26,9 @@ const DIRECTION_QUERY = {
   "графический дизайн": "графический дизайнер",
   "motion дизайн": "моушн-дизайнер",
   "иллюстрация": "иллюстратор",
+  "ml ai engineer": "machine learning engineer",
+  "computer vision engineer": "computer vision engineer",
+  "nlp llm engineer": "nlp engineer",
 };
 const norm = (s) => String(s || "").toLowerCase().replace(/[/\-–—]+/g, " ").replace(/\s+/g, " ").trim();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

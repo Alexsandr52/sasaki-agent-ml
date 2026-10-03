@@ -169,6 +169,9 @@ const DIRECTION_AREAS = {
 const DIRECTION_KEYWORDS = {
   "ux ui": ["ux", "ui"],
   "web дизайн": ["web дизайн", "веб дизайн", "дизайнер сайтов", "web designer"],
+  "ml ai engineer": ["machine learning engineer", "ml engineer", "ai engineer", "искусственный интеллект", "машинного обучения", "машинное обучение"],
+  "computer vision engineer": ["computer vision engineer", "cv engineer", "специалист компьютерного зрения", "инженер компьютерного зрения", "машинного зрения"],
+  "nlp llm engineer": ["nlp engineer", "llm engineer", "генеративный ии", "обработки естественного языка", "языковых моделей"],
 };
 
 // Эффективный список ключевых слов роли: направления, раскрытые в матчащиеся

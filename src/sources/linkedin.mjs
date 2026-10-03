@@ -25,6 +25,9 @@ const DIRECTION_QUERY = {
   "графический дизайн": "graphic designer",
   "motion дизайн": "motion designer",
   "иллюстрация": "illustrator",
+  "ml ai engineer": "machine learning engineer",
+  "computer vision engineer": "computer vision engineer",
+  "nlp llm engineer": "NLP engineer",
 };
 const norm = (s) => String(s || "").toLowerCase().replace(/[/\-–—]+/g, " ").replace(/\s+/g, " ").trim();
 
