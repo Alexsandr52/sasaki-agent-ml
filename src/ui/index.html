@@ -735,7 +735,7 @@ $("onb-go").onclick = async () => {
 const HIDDEN_SOURCES = new Set(["telegram", "linkedin", "2gis"]);
 // Агрегаторы отделены от карьерных сайтов компаний; всё, чего нет в списке,
 // считается сайтом компании.
-const AGGREGATORS = new Set(["getmatch", "habr", "hirehi", "finder", "designer.ru", "hh", "linkedin", "careerspace", "geekjob"]);
+const AGGREGATORS = new Set(["getmatch", "habr", "hirehi", "finder", "ods", "hh", "linkedin", "careerspace", "geekjob"]);
 
 function renderSources() {
   const companies = $("src-companies"); companies.textContent = "";
