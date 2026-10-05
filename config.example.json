@@ -54,8 +54,14 @@
     "tochka": true,
     "vk": false,
     "x5": true,
-    "yandex": false,
-    "telegram": false
+    "yandex": true,
+    "telegram": false,
+    "hh_targets": true,
+    "alfa_start": true,
+    "tbank_start": true,
+    "yandex_start": true,
+    "avito_start": true,
+    "raiffeisen_start": true
   },
   "delivery": {
     "channels": [
@@ -152,11 +158,102 @@
       "NLP"
     ]
   },
+  "vk": {
+    "specialties": [
+      283,
+      281
+    ]
+  },
   "finder": {
     "queries": [
       "machine learning engineer",
       "computer vision engineer",
-      "NLP engineer"
+      "NLP engineer",
+      "ML разработчик",
+      "data scientist",
+      "LLM engineer"
+    ]
+  },
+  "hh": {
+    "employers": [
+      {
+        "name": "Альфа-Банк",
+        "aliases": [
+          "Альфа-Банк",
+          "Альфа-Банк. Центральный офис"
+        ]
+      },
+      {
+        "name": "Т-Банк",
+        "aliases": [
+          "Т-Банк",
+          "Тинькофф",
+          "Т-Банк. ИТ. Разработка"
+        ]
+      },
+      {
+        "name": "Райффайзенбанк",
+        "aliases": [
+          "Райффайзенбанк",
+          "Райффайзен Банк"
+        ]
+      },
+      {
+        "name": "Яндекс",
+        "aliases": [
+          "Яндекс",
+          "Яндекс Еда"
+        ]
+      },
+      {
+        "name": "Авито",
+        "aliases": [
+          "Авито"
+        ]
+      },
+      {
+        "name": "Сбер",
+        "aliases": [
+          "Сбер",
+          "Сбербанк",
+          "Сбер. Data Science",
+          "Сбер. IT"
+        ]
+      },
+      {
+        "name": "ВК",
+        "aliases": [
+          "VK",
+          "VK, AI VK"
+        ]
+      },
+      {
+        "name": "Ozon",
+        "aliases": [
+          "Ozon Tech"
+        ]
+      },
+      {
+        "name": "Wildberries",
+        "aliases": [
+          "RWB (Wildberries & Russ)"
+        ]
+      }
+    ],
+    "queries": [
+      "machine learning engineer",
+      "ML инженер",
+      "data scientist",
+      "computer vision engineer",
+      "NLP engineer",
+      "LLM engineer"
+    ],
+    "detectFormat": false
+  },
+  "yandex": {
+    "professions": [
+      "ml-developer",
+      "analyst-developer"
     ]
   }
 }

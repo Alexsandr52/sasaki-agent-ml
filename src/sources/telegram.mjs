@@ -9,7 +9,7 @@ import { matchesKeywords, inferGrades, roleKeywords } from "../lib/filter.mjs";
 
 const cursorsPath = join(projectRoot, "data", "tg-cursors.json");
 
-export async function fetchTelegramChannels(cfg) {
+export async function fetchTelegramChannels(cfg, { dryRun = false } = {}) {
   const all = cfg.telegram?.channels || [];
   if (all.length === 0) {
     throw new Error("каналы не заданы (config.json → telegram.channels) — источник пропущен");
@@ -46,6 +46,7 @@ export async function fetchTelegramChannels(cfg) {
           salary: "",
           location: locationFrom(p.text),              // формат работы (+город) из текста поста
           level: levelFrom(p.text),                    // явный «Уровень: …», если есть
+          snippet: p.text,
           published: p.date || "",
           prefiltered: true,
         });
@@ -57,7 +58,7 @@ export async function fetchTelegramChannels(cfg) {
   }
 
   if (errors.length) console.error(`[telegram] недоступны (публичные ли?): ${errors.join(", ")}`);
-  saveCursors(cursors);
+  if (!dryRun) saveCursors(cursors);
   return out;
 }
 

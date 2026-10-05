@@ -11,6 +11,7 @@
 const API = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search";
 const PAGE = 10;
 const MAX_PAGES = 4;
+import { withSourceMeta } from "../lib/source-meta.mjs";
 
 // LinkedIn ищет одной фразой: оператор OR даёт широкие совпадения, а кириллица
 // в его индексе почти не работает. Поэтому
@@ -41,6 +42,7 @@ export async function fetchLinkedin(cfg) {
   const sinceSec = Math.round((lcfg.sinceHours ?? 168) * 3600);
 
   const byId = new Map();
+  const cappedQueries = [];
   for (const keywords of queries) {
     const base = new URLSearchParams({ keywords, location, f_TPR: `r${sinceSec}` });
     if (lcfg.remoteOnly) base.set("f_WT", "2");
@@ -54,10 +56,16 @@ export async function fetchLinkedin(cfg) {
       const cards = parseCards(await res.text());
       for (const c of cards) byId.set(c.id, c);
       if (cards.length < PAGE) break; // страница неполная — дальше пусто
+      if (page === MAX_PAGES - 1) cappedQueries.push(keywords);
       await new Promise((r) => setTimeout(r, 800)); // LinkedIn чувствителен к частоте
     }
   }
-  return [...byId.values()];
+  return withSourceMeta([...byId.values()], {
+    status: cappedQueries.length ? "partial" : "bounded",
+    reason: cappedQueries.length ? `достигнут предел ${MAX_PAGES} страниц для запросов: ${cappedQueries.join(", ")}` : "выдача ограничена окном свежести, запросами и доступными страницами",
+    maxPagesPerQuery: MAX_PAGES,
+    cappedQueries,
+  });
 }
 
 function parseCards(html) {

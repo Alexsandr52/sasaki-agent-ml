@@ -107,6 +107,9 @@
   button.block-btn { width: 100%; }
 
   .opts { display: flex; flex-direction: column; }
+  .source-opt { display: flex; align-items: center; gap: 8px; }
+  .source-opt .opt { flex: 1; min-width: 0; }
+  .source-health { color: var(--muted); font-size: 11px; white-space: nowrap; }
   label.opt {
     display: flex; align-items: center; gap: 8px; padding: 4px 0;
     font-size: 13.5px; cursor: pointer; user-select: none;
@@ -266,6 +269,7 @@
   .tracker td:last-child { padding-right: 12px; }
   .job-title { font-weight: 550; }
   .job-sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .fit-badge { display: inline-block; color: var(--muted); font-size: 11.5px; margin-top: 4px; }
   .fmt-badge {
     display: inline-block; font-size: 12.5px; padding: 3px 9px; border-radius: 7px;
     background: var(--badge-bg); color: var(--badge-fg);
@@ -735,14 +739,30 @@ $("onb-go").onclick = async () => {
 const HIDDEN_SOURCES = new Set(["telegram", "linkedin", "2gis"]);
 // Агрегаторы отделены от карьерных сайтов компаний; всё, чего нет в списке,
 // считается сайтом компании.
-const AGGREGATORS = new Set(["getmatch", "habr", "hirehi", "finder", "ods", "hh", "linkedin", "careerspace", "geekjob"]);
+const AGGREGATORS = new Set(["getmatch", "habr", "hirehi", "finder", "ods", "hh", "hh_targets", "linkedin", "careerspace", "geekjob"]);
 
 function renderSources() {
   const companies = $("src-companies"); companies.textContent = "";
   const aggregators = $("src-aggregators"); aggregators.textContent = "";
   state.sources.filter((s) => !HIDDEN_SOURCES.has(s.name)).forEach((s) => {
     const box = AGGREGATORS.has(s.name) ? aggregators : companies;
-    box.append(optRow(s.name, s.enabled, (on) => { s.enabled = on; markDirty(); }));
+    const row = document.createElement("div"); row.className = "source-opt";
+    row.append(optRow(s.name === "hh_targets" ? "HH · целевые компании" : s.name, s.enabled, (on) => { s.enabled = on; markDirty(); }));
+    const status = s.health?.status || "not_run";
+    const labels = {
+      disabled: "выключен", not_run: "ещё не запускался", ok: "работает",
+      empty: "пустая выдача", partial: "частичная выдача", not_configured: "нет настроек",
+      bounded: "ограниченный поиск", unknown: "полнота неизвестна",
+      closed: "набор закрыт", stale: "страница устарела", program_open: "программа открыта",
+      program_open_general: "открыта общая программа",
+      tls_error: "ошибка TLS", schema_error: "изменилась схема", error: "ошибка",
+    };
+    const badge = document.createElement("span"); badge.className = "source-health";
+    badge.textContent = (labels[status] || status) + (Number.isFinite(s.health?.raw) && status !== "disabled" ? ` · ${s.health.raw} → ${s.health.matched || 0}` : "");
+    const details = s.health?.error || s.health?.configuration || s.health?.coverage?.reason;
+    badge.title = ["Получено → прошло фильтры (включая требующие проверки)", details, s.lastRunAt && `Последний запуск: ${new Date(s.lastRunAt).toLocaleString()}`].filter(Boolean).join("\n");
+    row.append(badge);
+    box.append(row);
   });
   renderTgChannels();
 }
@@ -891,10 +911,10 @@ function inView(v, key) {
 // в поле company каналом и является, компанией его не показываем.
 function sourceLabel(v) {
   if (v.source === "telegram") return "@" + String(v.id).split(":")[0];
-  return v.source || "";
+  return v.source === "hh_targets" ? "HH · компания" : v.source || "";
 }
 function companyOf(v) {
-  const c = v.company || "";
+  const c = v.targetEmployer || v.company || "";
   return c.startsWith("@") ? "" : c;
 }
 // Грейд: метаданные источника (level) приоритетнее, иначе — из заголовка.
@@ -991,6 +1011,7 @@ function passesFeedFilters(v) {
   const wf = workFormat(v);
   // «не указан» не скрывается никогда (в т.ч. если остался в старом localStorage)
   if (wf !== "не указан" && hiddenFormats.has(wf)) return false;
+  if (v.opportunityType === "internship_program" && v.availability === "active") return true;
   const d = jobDate(v);
   return d === 0 || d >= Date.now() - periodDays * 24 * 3600e3; // без даты — не режем
 }
@@ -1108,6 +1129,18 @@ function renderRows() {
     const sub = document.createElement("div"); sub.className = "job-sub";
     setHl(sub, `${companyOf(v) || "не указана"} · ${gradeOf(v) || "не указан"}`, q);
     job.append(ttl, sub);
+    if (v.opportunityType === "internship_program") {
+      const type = document.createElement("div");
+      type.className = "fit-badge";
+      type.textContent = "Программа стажировки · открытый набор";
+      job.append(type);
+    }
+    if (v.fitDecision === "review") {
+      const review = document.createElement("div");
+      review.className = "fit-badge";
+      review.textContent = `Проверить: ${(v.fitReasons || ["требования не указаны"]).join("; ")}`;
+      job.append(review);
+    }
     const fmt = td("fmtcell"); const wf = workFormat(v);
     if (wf === "не указан") { fmt.className = "fmtcell muted"; fmt.textContent = "не указан"; }
     else {
@@ -1122,7 +1155,7 @@ function renderRows() {
     if (safeUrl) {
       const a = document.createElement("a");
       a.className = "src-link"; a.href = safeUrl; a.target = "_blank"; a.rel = "noopener";
-      a.title = "Открыть вакансию"; setHl(a, sourceLabel(v) || "открыть", q);
+      a.title = v.opportunityType === "internship_program" ? "Открыть программу стажировки" : "Открыть вакансию"; setHl(a, sourceLabel(v) || "открыть", q);
       // фавиконка сайта источника (через кэш-сервис гугла); не загрузилась — убираем
       const fav = document.createElement("img");
       fav.className = "fav"; fav.alt = ""; fav.loading = "lazy";

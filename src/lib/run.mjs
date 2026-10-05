@@ -1,9 +1,11 @@
 // Пайплайн одного прогона: собрать → отфильтровать → отсеять виденное →
 // доставить → заархивировать. Используется и кроном (collect.mjs), и UI-сервером.
-import { matchesItem, structuralOk, dedupeByTarget, targetKey, textKey } from "./filter.mjs";
+import { assessItem, dedupeByTarget, targetKey, textKey } from "./filter.mjs";
 import { loadSeen, saveSeen, appendJobs, pruneJobs } from "./state.mjs";
 import { sendTelegram, telegramConfigured, escapeHtml } from "./telegram.mjs";
 import { discoverSources, discoverDeliverers } from "./registry.mjs";
+import { saveSourceHealth } from "./source-health.mjs";
+import { normalizeOpportunity } from "./opportunity.mjs";
 
 // Сетевые сбои у сайтов-источников случаются: у части из них перед бэкендом
 // стоит защита, которая иногда не принимает соединение (UND_ERR_CONNECT_TIMEOUT),
@@ -13,11 +15,14 @@ const RETRIABLE = /fetch failed|timeout|timed out|ECONNRESET|ECONNREFUSED|ETIMED
 const RETRIES = 2;        // всего до 3 попыток на источник
 const RETRY_PAUSE = 1500; // мс между попытками
 
-async function fetchWithRetry(src, cfg, log) {
+async function fetchWithRetry(src, cfg, log, options) {
   for (let attempt = 0; ; attempt++) {
     try {
-      return await src.fetch(cfg);
+      return await src.fetch(cfg, options);
     } catch (e) {
+      const causeCode = e.cause?.code || "";
+      if (causeCode && !e.message.includes(causeCode)) e.message = `${e.message} (${causeCode})`;
+      if (/CERT|TLS|SSL/i.test(causeCode)) throw e;
       const last = attempt >= RETRIES;
       if (last || !RETRIABLE.test(e.message)) throw e;
       log(`[${src.name}] сбой сети (${e.message}) — повтор ${attempt + 1}/${RETRIES}`);
@@ -27,22 +32,53 @@ async function fetchWithRetry(src, cfg, log) {
 }
 
 // onLog — куда писать прогресс (по умолчанию в консоль; сервер собирает в массив).
-export async function runPipeline(cfg, { onLog = console.log } = {}) {
+function sourceConfiguration(name, cfg) {
+  const required = {
+    alfa: ["alfa.businessLines", cfg.alfa?.businessLines],
+    hirehi: ["hirehi.categories", cfg.hirehi?.categories],
+    tbank: ["tbank.professions", cfg.tbank?.professions],
+    vk: ["vk.specialties", cfg.vk?.specialties],
+    yandex: ["yandex.professions", cfg.yandex?.professions],
+    hh_targets: ["hh.employers", cfg.hh?.employers],
+  }[name];
+  if (!required) return "ready";
+  return Array.isArray(required[1]) && required[1].length ? "ready" : `not_configured:${required[0]}`;
+}
+
+export async function runPipeline(cfg, { onLog = console.log, diagnose = false, refreshOnly = false } = {}) {
   const log = (msg) => onLog(msg);
 
   // --- сбор -----------------------------------------------------------------
   const all = [];
   const errors = [];
+  const sourceReport = [];
   for (const src of await discoverSources()) {
-    if (cfg.sources?.[src.name] === false) continue;
+    if (cfg.sources?.[src.name] === false) {
+      sourceReport.push({ source: src.name, status: "disabled", raw: 0 });
+      continue;
+    }
+    const configuration = sourceConfiguration(src.name, cfg);
+    if (configuration !== "ready") {
+      log(`[${src.name}] не настроен: ${configuration.slice("not_configured:".length)}`);
+      sourceReport.push({ source: src.name, status: "not_configured", configuration: configuration.slice("not_configured:".length), raw: 0 });
+      continue;
+    }
     log(`[${src.name}] запрашиваю…`);
     try {
-      const items = await fetchWithRetry(src, cfg, log);
+      const items = await fetchWithRetry(src, cfg, log, { dryRun: diagnose });
       log(`[${src.name}] получено: ${items.length}`);
-      all.push(...items);
+      const coverage = items.sourceMeta || { status: "unknown", reason: "адаптер не сообщает полноту выдачи" };
+      // Preserve explicit source states even when a healthy source has no
+      // current listing (for example a closed internship cohort).
+      const status = coverage.status || (items.length === 0 ? "empty" : "unknown");
+      sourceReport.push({ source: src.name, status, raw: items.length, coverage });
+      all.push(...items.map(normalizeOpportunity));
     } catch (e) {
       log(`[${src.name}] ошибка: ${e.message}`);
       errors.push(`${src.name}: ${e.message}`);
+      const status = /certificate|tls|ssl|SELF_SIGNED|CERT_/i.test(e.message) ? "tls_error"
+        : /изменилась схема|ожидались .*\[\]/i.test(e.message) ? "schema_error" : "error";
+      sourceReport.push({ source: src.name, status, error: e.message, raw: 0 });
     }
   }
 
@@ -50,7 +86,8 @@ export async function runPipeline(cfg, { onLog = console.log } = {}) {
   const seen = loadSeen();
   // prefiltered-источники сматчили ключевые слова сами (по полному тексту),
   // но структурные срезы — грейд/область/формат/тип найма — применяем и к ним
-  const matched = all.filter((v) => (v.prefiltered ? structuralOk(v, cfg) : matchesItem(v, cfg)));
+  const assessments = all.map((v) => assessItem(v, cfg));
+  const matched = all.filter((v, i) => assessments[i].decision !== "excluded");
   // межисточниковый дедуп: одна вакансия из телеги и из прямого источника — одна
   const deduped = dedupeByTarget(matched);
   const fresh = deduped.filter(
@@ -59,7 +96,65 @@ export async function runPipeline(cfg, { onLog = console.log } = {}) {
       !seen.has(`url:${targetKey(v)}`) &&
       !(textKey(v) && seen.has(textKey(v))) // тот же пост из другого канала в прошлый прогон
   );
-  log(`Совпало с критериями и ещё не отправлялось: ${fresh.length}`);
+  for (const source of sourceReport) {
+    const belongs = (v) => v.source === source.source || (source.source === "hh" && v.source === "hh.ru");
+    source.matched = matched.filter(belongs).length;
+    source.excluded = all.filter((v, i) => belongs(v) && assessments[i].decision === "excluded").length;
+    source.suitable = all.filter((v, i) => belongs(v) && assessments[i].decision === "suitable").length;
+    source.review = all.filter((v, i) => belongs(v) && assessments[i].decision === "review").length;
+    source.excludedReasons = {};
+    all.forEach((v, i) => {
+      if (!belongs(v) || assessments[i].decision !== "excluded") return;
+      const reason = assessments[i].reasons[0] || "неизвестная причина";
+      source.excludedReasons[reason] = (source.excludedReasons[reason] || 0) + 1;
+    });
+    source.uniqueMatched = deduped.filter((v) => v.source === source.source || (source.source === "hh" && v.source === "hh.ru")).length;
+    source.newForDelivery = fresh.filter((v) => v.source === source.source || (source.source === "hh" && v.source === "hh.ru")).length;
+  }
+  const excludedReasons = {};
+  assessments.forEach((assessment) => {
+    if (assessment.decision !== "excluded") return;
+    const reason = assessment.reasons[0] || "неизвестная причина";
+    excludedReasons[reason] = (excludedReasons[reason] || 0) + 1;
+  });
+  const report = {
+    generatedAt: new Date().toISOString(),
+    totals: {
+      raw: all.length,
+      matched: matched.length,
+      excluded: all.length - matched.length,
+      review: assessments.filter((a) => a.decision === "review").length,
+      suitable: assessments.filter((a) => a.decision === "suitable").length,
+      uniqueMatched: deduped.length,
+      uniqueSuitable: deduped.filter((v) => assessItem(v, cfg).decision === "suitable").length,
+      uniqueReview: deduped.filter((v) => assessItem(v, cfg).decision === "review").length,
+      internshipPrograms: deduped.filter((v) => v.opportunityType === "internship_program").length,
+      newForDelivery: fresh.length,
+    },
+    excludedReasons,
+    companies: [...new Set(all.map((v) => v.targetEmployer || v.company || "не указана"))].map((company) => {
+      const indexes = all.flatMap((v, i) => (v.targetEmployer || v.company || "не указана") === company ? [i] : []);
+      return {
+        company, raw: indexes.length,
+        suitable: indexes.filter((i) => assessments[i].decision === "suitable").length,
+        review: indexes.filter((i) => assessments[i].decision === "review").length,
+        excluded: indexes.filter((i) => assessments[i].decision === "excluded").length,
+        programs: indexes.filter((i) => all[i].opportunityType === "internship_program" && assessments[i].decision !== "excluded").length,
+        samples: indexes.filter((i) => assessments[i].decision !== "excluded").slice(0, 5).map((i) => ({
+          title: all[i].title, url: all[i].url, source: all[i].source,
+          decision: assessments[i].decision, reasons: assessments[i].reasons,
+        })),
+      };
+    }),
+    sources: sourceReport,
+  };
+  log(`Собрано ${all.length}; совпало ${matched.length}; исключено ${all.length - matched.length}; после дедупа ${deduped.length}; новых для доставки ${fresh.length}`);
+  log(`Новых для доставки: ${fresh.length} (это не число всех найденных вакансий)`);
+
+  if (diagnose) {
+    return { fresh, matched: deduped, candidates: all, errors, report };
+  }
+  saveSourceHealth(report);
 
   // Архив ленты наполняем ВСЕМ, что подходит под текущие критерии, а не только
   // недоставленным. Иначе так: вакансия пришла → попала в seen → пользователь
@@ -67,7 +162,14 @@ export async function runPipeline(cfg, { onLog = console.log } = {}) {
   // обратно, но seen считает её доставленной, и в ленту она уже не вернётся
   // никогда. Доставка (уведомления) по-прежнему только по `fresh` — спама нет.
   // appendJobs дедуплицирует по source:id, повторов не будет.
-  appendJobs(deduped);
+  const programStates = Object.fromEntries(sourceReport
+    .filter((s) => ["closed", "unknown", "stale", "error", "tls_error", "schema_error"].includes(s.status))
+    .map((s) => [s.source, s.status === "closed" ? "closed" : "unknown"]));
+  appendJobs(deduped, { updates: all, programStates });
+  if (refreshOnly) {
+    log("Лента обновлена; уведомления, seen и очистка архива пропущены");
+    return { fresh, matched: deduped, candidates: all, errors, report };
+  }
 
   // --- доставка -------------------------------------------------------------
   if (fresh.length > 0) {

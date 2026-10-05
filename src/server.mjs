@@ -8,10 +8,11 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadEnv, projectRoot } from "./lib/env.mjs";
 import { loadJobs, setJobStatus, setJobLetter, addJob, deleteJob } from "./lib/state.mjs";
-import { inferGrades, matchesItem } from "./lib/filter.mjs";
+import { inferGrades, matchesItem, assessItem } from "./lib/filter.mjs";
 import { discoverSources } from "./lib/registry.mjs";
 import { telegramConfigured } from "./lib/telegram.mjs";
 import { runPipeline } from "./lib/run.mjs";
+import { loadSourceHealth } from "./lib/source-health.mjs";
 
 loadEnv();
 
@@ -35,7 +36,12 @@ function withStatus(jobs, cfg) {
     const rec = { ...j, status };
     // ручное под критерии не проверяем: пользователь завёл запись сам, она не
     // должна пропадать из ленты из-за несовпадения с keywords
-    if (cfg && status === "Новая" && j.source !== "manual") rec.matchesNow = matchesItem(j, cfg);
+    if (cfg && status === "Новая" && j.source !== "manual") {
+      const assessment = assessItem(j, cfg);
+      rec.matchesNow = matchesItem(j, cfg);
+      rec.fitDecision = assessment.decision;
+      rec.fitReasons = assessment.reasons;
+    }
     return rec;
   });
 }
@@ -183,7 +189,17 @@ async function handle(req, res) {
       return json(res, 200, { needsSetup: true });
     }
     const known = (await discoverSources()).map((s) => s.name);
-    const sources = known.map((name) => ({ name, enabled: cfg.sources?.[name] !== false }));
+    const health = loadSourceHealth();
+    const sources = known.map((name) => {
+      const enabled = cfg.sources?.[name] !== false;
+      const last = health?.sources?.find((row) => row.source === name);
+      return {
+        name,
+        enabled,
+        health: !enabled ? { status: "disabled" } : last || { status: "not_run" },
+        lastRunAt: health?.generatedAt || "",
+      };
+    });
     const tgOff = new Set(cfg.telegram?.disabled || []);
     const tgChannels = (cfg.telegram?.channels || []).map((name) => ({
       name,
@@ -199,6 +215,7 @@ async function handle(req, res) {
       formats: cfg.formats || [],
       levels: levelsFor(cfg),
       sources,
+      sourceHealth: health,
       tgChannels,
       statuses: STATUSES,
       telegramConfigured: telegramConfigured(),

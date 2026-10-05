@@ -5,6 +5,7 @@ import {
 import { basename, join } from "node:path";
 import { projectRoot } from "./env.mjs";
 import { matchesItem, targetKey } from "./filter.mjs";
+import { normalizeOpportunity, mergeOpportunity } from "./opportunity.mjs";
 
 const dataDir = join(projectRoot, "data");
 const statePath = join(dataDir, "seen.json");
@@ -101,7 +102,7 @@ const JOBS_CAP = 2000;
 
 export function loadJobs() {
   const arr = readJson(jobsPath, []);
-  return Array.isArray(arr) ? arr : [];
+  return Array.isArray(arr) ? arr.map(normalizeOpportunity) : [];
 }
 
 // Дозаписать свежие находки, дедуп по source:id, обрезка до JOBS_CAP.
@@ -109,12 +110,18 @@ export function loadJobs() {
 // откликов запись попадает, когда пользователь жмёт «В отклики» в пульте.
 // Кап режет только «Новые»: записи со статусом (отклики, скрытые) — трекинг
 // пользователя, их не выбрасываем, даже если их больше капа.
-export function appendJobs(items) {
-  if (!items?.length) return;
+export function appendJobs(items, { updates = [], programStates = {} } = {}) {
+  if (!items?.length && !updates.length && !Object.keys(programStates).length) return;
   const collectedAt = new Date().toISOString();
   withLock(() => {
     const existing = loadJobs();
-    const have = new Set(existing.map((v) => `${v.source}:${v.id}`));
+    for (const item of existing) {
+      if (item.opportunityType === "internship_program" && programStates[item.source]) {
+        item.availability = programStates[item.source];
+      }
+    }
+    const existingById = new Map(existing.map((v) => [`${v.source}:${v.id}`, v]));
+    const have = new Set(existingById.keys());
     // Дедуп по source:id ловит только повтор из ТОГО ЖЕ источника. Одна вакансия
     // приходит и из телеграм-поста, и из прямого источника — id у них разные, и
     // без проверки по ссылке в ленте появлялись две карточки на одну вакансию.
@@ -125,9 +132,26 @@ export function appendJobs(items) {
       const k = targetKey(v);
       if (k) byTarget.set(k, v);
     }
+    // A newly discovered requirement or closure must refresh a known record
+    // even when it no longer passes the current search filter.
+    for (const incoming of updates) {
+      const prior = existingById.get(`${incoming.source}:${incoming.id}`);
+      if (prior) Object.assign(prior, mergeOpportunity(prior, incoming));
+    }
     const fresh = [];
-    for (const v of items) {
-      if (have.has(`${v.source}:${v.id}`)) continue;
+    for (const raw of items) {
+      const v = normalizeOpportunity(raw);
+      const idKey = `${v.source}:${v.id}`;
+      if (have.has(idKey)) {
+        // Источники со временем начинают отдавать дополнительные поля
+        // (например, Finder добавил стаж в API). Обновляем метаданные старой
+        // карточки, сохраняя время обнаружения и пользовательские поля статуса.
+        const prior = existingById.get(idKey);
+        if (prior) {
+          Object.assign(prior, mergeOpportunity(prior, v));
+        }
+        continue;
+      }
       const k = targetKey(v);
       const twin = k && byTarget.get(k);
       if (twin) {
@@ -142,6 +166,8 @@ export function appendJobs(items) {
       const rec = { ...v, collectedAt };
       if (k) byTarget.set(k, rec);
       fresh.push(rec);
+      have.add(idKey);
+      existingById.set(idKey, rec);
     }
     let merged = [...fresh, ...existing];
     if (merged.length > JOBS_CAP) {

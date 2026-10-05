@@ -1,8 +1,8 @@
 // hirehi.ru: агрегатор, открытый JSON API. Фильтры: category, level, format
 // (каждый можно несколько раз), пагинация page=N + has_more. Ссылка вакансии
 // /{category}/{slug}-{id}, роутинг по id (слаг делаем сами транслитом).
-// Фильтрация целиком на стороне API (грейд в заголовках не пишут, по ключевым
-// словам их не отобрать) → prefiltered.
+// API фильтрует категорию/грейд, но не ML-направление; заголовок дополнительно
+// проверяется центральным фильтром, поэтому вакансии других категорий не пройдут.
 const API = "https://hirehi.ru/api/search/jobs";
 const MAX_PAGES = 5; // сортировка свежее-сверху; крон добирает только новое
 
@@ -55,7 +55,6 @@ export async function fetchHirehi(cfg) {
           level: v.level || "",
           format: v.format || "",
           published: v.created_at || "",
-          prefiltered: true,
         });
       }
       if (!json.has_more || !(json.jobs || []).length) break;

@@ -1,3 +1,4 @@
+import { sourceFetch as fetch } from "../lib/source-fetch.mjs";
 // Finder (finder.work, бывш. finder.vc): агрегатор, открытый JSON API.
 // Параметра категории у API нет — используем полнотекстовый search
 // (запросы — в config.json → finder.queries); выдача по релевантности,
@@ -6,11 +7,13 @@
 const API = "https://api.finder.work/api/v1/vacancies/";
 const PAGE = 100;
 const MAX_PAGES = 2;
+import { withSourceMeta } from "../lib/source-meta.mjs";
 
 export async function fetchFinder(cfg) {
   const queries = cfg.finder?.queries || ["machine learning engineer", "computer vision engineer", "NLP engineer"];
   const seen = new Set();
   const out = [];
+  const cappedQueries = [];
   for (const q of queries) {
     for (let page = 0; page < MAX_PAGES; page++) {
       const params = new URLSearchParams({
@@ -23,7 +26,8 @@ export async function fetchFinder(cfg) {
       });
       if (!res.ok) throw new Error(`Finder HTTP ${res.status}`);
       const json = await res.json();
-      const items = json.items || [];
+      if (!Array.isArray(json.items)) throw new Error("Finder: изменилась схема API (ожидалось items[])");
+      const items = json.items;
       for (const v of items) {
         if (seen.has(v.id) || v.archived_at) continue;
         seen.add(v.id);
@@ -36,15 +40,25 @@ export async function fetchFinder(cfg) {
           applyUrl: v.external_url?.value || "",   // оригинал (часто hh) — для межисточникового дедупа
           salary: fmtSalary(v),
           location: fmtLocation(v),
+          // API reports no_experience / year_minimum / three_years_more / etc.
+          experience: v.experience || "",
           published: v.publication_at || "",
         });
       }
       if (items.length < PAGE) break;
+      if (page === MAX_PAGES - 1) cappedQueries.push(q);
       await new Promise((r) => setTimeout(r, 300));
     }
   }
 
-  return out;
+  return withSourceMeta(out, {
+    status: cappedQueries.length ? "partial" : "bounded",
+    reason: cappedQueries.length
+      ? `достигнут предел ${MAX_PAGES} страниц по запросам: ${cappedQueries.join(", ")}`
+      : `выдача проверена максимум на ${MAX_PAGES} страниц по каждому запросу`,
+    maxPagesPerQuery: MAX_PAGES,
+    cappedQueries,
+  });
 }
 
 function fmtSalary(v) {

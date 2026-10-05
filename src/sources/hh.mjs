@@ -11,6 +11,7 @@
 // логика та же, что в linkedin.mjs. Остальные параметры поиска RSS понимает
 // как сайт (проверено: area=1 и area=2 дают непересекающиеся выдачи).
 const RSS = "https://hh.ru/search/vacancy/rss";
+import { withSourceMeta } from "../lib/source-meta.mjs";
 const UA = "sasaki-agent/0.1 (+https://github.com/peachcardinal/sasaki-agent)";
 // hh отвечает 451 на частые запросы и отпускает через несколько секунд
 const PAUSE = 5000;
@@ -40,6 +41,11 @@ export async function fetchHH(cfg) {
   if (!queries.length) return [];
 
   const byId = new Map();
+  const cappedQueries = [];
+  const failedQueries = [];
+  const formatErrors = [];
+  let successfulQueries = 0;
+  const requestCount = queries.length * (hcfg.detectFormat === false ? 1 : 3);
   for (const [i, text] of queries.entries()) {
     if (i) await sleep(PAUSE);
     const params = new URLSearchParams({ text, search_field: "name" });
@@ -47,7 +53,15 @@ export async function fetchHH(cfg) {
     if (hcfg.period) params.set("period", String(hcfg.period));
     if (hcfg.remoteOnly) params.set("schedule", "remote");
 
-    const items = parseItems(await fetchFeed(`${RSS}?${params}`));
+    let items;
+    try {
+      items = parseItems(await fetchFeed(`${RSS}?${params}`));
+      successfulQueries++;
+    } catch (error) {
+      failedQueries.push({ query: text, error: error.message });
+      continue;
+    }
+    if (items.length >= 20) cappedQueries.push(text);
     // Формат работы сама лента не отдаёт, но поиск умеет по нему фильтровать.
     // Два добора той же выдачи с work_format=REMOTE/HYBRID дают списки id, по
     // которым формат проставляется. Вакансия может быть в обоих сразу — это и
@@ -55,11 +69,28 @@ export async function fetchHH(cfg) {
     if (hcfg.detectFormat !== false) {
       const remote = await idsFor(params, "REMOTE");
       const hybrid = await idsFor(params, "HYBRID");
-      for (const v of items) applyFormat(v, remote.has(v.id), hybrid.has(v.id));
+      if (remote.error) formatErrors.push({ query: text, format: "REMOTE", error: remote.error });
+      if (hybrid.error) formatErrors.push({ query: text, format: "HYBRID", error: hybrid.error });
+      for (const v of items) applyFormat(v, remote.ids.has(v.id), hybrid.ids.has(v.id));
     }
     for (const v of items) byId.set(v.id, v);
   }
-  return [...byId.values()];
+  if (!successfulQueries) throw new Error(`hh.ru: все поисковые запросы завершились ошибкой (${failedQueries.map((f) => `${f.query}: ${f.error}`).join("; ")})`);
+  return withSourceMeta([...byId.values()], {
+    status: cappedQueries.length || failedQueries.length || formatErrors.length ? "partial" : "bounded",
+    reason: [
+      "RSS не показывает total и полное описание; полнота ограничена текущими запросами",
+      cappedQueries.length ? `достигнут лимит 20 в: ${cappedQueries.join(", ")}` : "",
+      failedQueries.length ? `ошибки ролевых запросов: ${failedQueries.map((f) => f.query).join(", ")}` : "",
+      formatErrors.length ? `ошибки определения формата: ${formatErrors.length}` : "",
+    ].filter(Boolean).join("; "),
+    requestCount,
+    successfulQueries,
+    resultLimitPerQuery: 20,
+    cappedQueries,
+    failedQueries,
+    formatErrors,
+  });
 }
 
 // id вакансий той же выдачи, суженной по формату работы. Сбой добора не должен
@@ -69,9 +100,9 @@ async function idsFor(params, workFormat) {
   const q = new URLSearchParams(params);
   q.set("work_format", workFormat);
   try {
-    return new Set(parseItems(await fetchFeed(`${RSS}?${q}`)).map((v) => v.id));
-  } catch {
-    return new Set();
+    return { ids: new Set(parseItems(await fetchFeed(`${RSS}?${q}`)).map((v) => v.id)), error: "" };
+  } catch (error) {
+    return { ids: new Set(), error: error.message };
   }
 }
 
@@ -119,6 +150,7 @@ function parseItems(xml) {
       url,
       salary: /не указан/i.test(salary) ? "" : salary,
       location: decode(field(desc, "Регион")),
+      availability: "active",
       // В ленте есть только регион, про удалёнку/гибрид она молчит. Без этого
       // флага пульт вывел бы «офис» по одному названию города — и снятая
       // галочка «офис» молча спрятала бы весь hh, включая удалённые вакансии.

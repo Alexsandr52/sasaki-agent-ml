@@ -25,7 +25,7 @@ function saveCache(cache) {
 // Проставить items[].published: для незнакомых id зовёт fetchDate(item)
 // (1 сетевой запрос), результат кэширует. Ошибка добычи не кэшируется —
 // попробуем в следующий прогон; сам сбор из-за даты не валим.
-export async function withPubDates(source, items, fetchDate) {
+export async function withPubDates(source, items, fetchDate, { persist = true } = {}) {
   const cache = loadCache();
   const known = cache[source] || {};
   const next = {};
@@ -42,6 +42,6 @@ export async function withPubDates(source, items, fetchDate) {
     item.published = next[item.id] || "";
   }
   cache[source] = next; // держим только id из текущей выдачи
-  saveCache(cache);
+  if (persist) saveCache(cache);
   return items;
 }
